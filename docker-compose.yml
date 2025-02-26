@@ -24,7 +24,7 @@ services:
     volumes:
       - ./frontend:/app
     command: >
-      sh -c " npm start"
+      sh -c "npm start"
     restart: on-failure
 
   web:

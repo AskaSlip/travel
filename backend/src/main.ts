@@ -68,5 +68,3 @@ async function bootstrap() {
   });
 }
 void bootstrap();
-
-//todo чому папка беку не закинулась на гітхаб
