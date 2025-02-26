@@ -1,14 +1,11 @@
 {
-  "name": "${PROJECT_NAME}",
-  "version": "1.0.0",
-  "description": "",
-  "main": "dist/index.js",
-  "scripts": {
-    "build": "tsc"
-  },
-  "dependencies": {},
-  "devDependencies": {
-    "typescript": "^5.5.3"
-  },
-  "private": true
+  "dependencies": {
+    "@nestjs/config": "^4.0.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
+    "dotenv": "^16.4.7",
+    "eslint-plugin-simple-import-sort": "^12.1.1",
+    "next": "^15.1.7",
+    "react": "^19.0.0"
+  }
 }
