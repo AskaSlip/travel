@@ -1,0 +1,51 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8888:5000"
+    env_file:
+      - .env
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    restart: on-failure
+    command: >
+      sh -c "npx nest start"
+
+  frontend:
+    build:
+      context: .
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    volumes:
+      - ./frontend:/app
+    command: >
+      sh -c " npm start"
+    restart: on-failure
+
+  web:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - frontend
+      - app
+    restart: on-failure
+
+#  TODO Add a database service and init
+#  db:
+#    image: postgres
+#    ports:
+#      - "5555:5432"
+#    env_file:
+#      - .env
+#    volumes:
+#      - ./data:/var/lib/postgresql/data
+#      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+#    restart: on-failure
