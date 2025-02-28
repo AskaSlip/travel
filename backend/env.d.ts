@@ -12,5 +12,12 @@ declare namespace NodeJS {
     REDIS_HOST: string;
     REDIS_PORT: string;
     REDIS_PASSWORD: string;
+
+    AWS_S3_ACCESS_KEY: string;
+    AWS_S3_SECRET_KEY: string;
+
+    SENTRY_DSN: string;
+    SENTRY_ENV: string;
+    SENTRY_DEBUG: string;
   }
 }

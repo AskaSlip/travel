@@ -3,15 +3,17 @@ import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as dotenv from 'dotenv';
-
+dotenv.config();
 import { AppModule } from './app.module';
 import { SwaggerHelper } from './common/helpers/swagger.helper';
 import { AppConfig } from './configs/config-type';
+import * as Sentry from "@sentry/nestjs"
+import { nodeProfilingIntegration } from "@sentry/profiling-node";
 
 async function bootstrap() {
+
   const app = await NestFactory.create(AppModule);
 
-  dotenv.config();
 
   const config = new DocumentBuilder()
     .setTitle('Travel Planner')
@@ -57,6 +59,7 @@ async function bootstrap() {
 
   const configService = app.get(ConfigService);
   const appConfig = configService.get<AppConfig>('app');
+
 
   await app.listen(appConfig?.port || 5000, () => {
     console.log(

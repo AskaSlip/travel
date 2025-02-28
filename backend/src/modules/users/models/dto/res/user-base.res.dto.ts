@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
+import {UserID} from "../../../../../common/types/entity-ids.type";
+import {RoleEnum} from "../../../../../common/enums/role.enum";
 
-import { RoleEnum } from '../../../../common/enums/role.enum';
-import { UserID } from '../../../../common/types/entity-ids.type';
 
 export class UserBaseResDto {
   @ApiProperty({ type: String })

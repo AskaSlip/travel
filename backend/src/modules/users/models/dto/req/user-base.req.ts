@@ -9,9 +9,9 @@ import {
   Length,
   Matches,
 } from 'class-validator';
+import {TransformHelper} from "../../../../../common/helpers/transform.helper";
+import {RoleEnum} from "../../../../../common/enums/role.enum";
 
-import { RoleEnum } from '../../../../common/enums/role.enum';
-import { TransformHelper } from '../../../../common/helpers/transform.helper';
 
 export class UserBaseReqDto {
   @ApiProperty({ example: 'Anna Black' })
@@ -41,7 +41,6 @@ export class UserBaseReqDto {
   role: string;
 
   @ApiProperty({ example: '2001-01-01', type: String })
-  @Transform(TransformHelper.trim)
   @IsDate()
   @Type(() => Date)
   birthdate: Date;
