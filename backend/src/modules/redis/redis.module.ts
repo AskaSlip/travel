@@ -2,11 +2,13 @@ import {Module} from "@nestjs/common";
 import Redis from "ioredis";
 import {ConfigService} from "@nestjs/config";
 import {Config, RedisConfig} from "../../configs/config-type";
+import {RedisService} from "./services/redis.service";
+import {REDIS_CLIENT} from "./models/redis.constants";
 
 @Module({
     providers: [
         {
-            provide: 'REDIS_CLIENT',
+            provide: (REDIS_CLIENT),
             useFactory: (configService: ConfigService<Config>) => {
                 const config = configService.get<RedisConfig>('redis');
                 return new Redis({
@@ -17,9 +19,9 @@ import {Config, RedisConfig} from "../../configs/config-type";
             },
             inject: [ConfigService],
         },
-        // RedisService,
+        RedisService,
     ],
-    // exports: [RedisService],
+    exports: [RedisService],
 })
 
 export class RedisModule {}

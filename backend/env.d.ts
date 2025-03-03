@@ -19,5 +19,10 @@ declare namespace NodeJS {
     SENTRY_DSN: string;
     SENTRY_ENV: string;
     SENTRY_DEBUG: string;
+
+    JWT_ACCESS_SECRET: string
+    JWT_REFRESH_SECRET: string
+    JWT_ACCESS_EXPIRES_IN: number
+    JWT_REFRESH_EXPIRES_IN: number
   }
 }

@@ -7,13 +7,16 @@ dotenv.config();
 import { AppModule } from './app.module';
 import { SwaggerHelper } from './common/helpers/swagger.helper';
 import { AppConfig } from './configs/config-type';
-import * as Sentry from "@sentry/nestjs"
-import { nodeProfilingIntegration } from "@sentry/profiling-node";
 
 async function bootstrap() {
 
   const app = await NestFactory.create(AppModule);
 
+  app.enableCors({
+    origin: 'http://localhost:3000',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
+  });
 
   const config = new DocumentBuilder()
     .setTitle('Travel Planner')

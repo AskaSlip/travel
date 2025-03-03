@@ -60,4 +60,10 @@ export default (): Config => ({
         env: getEnv('SENTRY_ENV'),
         debug: getEnv('SENTRY_DEBUG') === 'true',
     },
+    jwt: {
+      accessSecret: getEnv('JWT_ACCESS_SECRET'),
+      accessExpiresIn: parseInt(getEnv('JWT_ACCESS_EXPIRES_IN'), 10) || 3600,
+      refreshSecret: getEnv('JWT_REFRESH_SECRET'),
+      refreshExpiresIn: parseInt(getEnv('JWT_REFRESH_EXPIRES_IN'), 10) || 86400,
+    }
 });

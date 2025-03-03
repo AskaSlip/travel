@@ -1,36 +1,33 @@
 import { Injectable } from '@nestjs/common';
 
 import { UpdateUserReqDto } from '../models/dto/req/update-user.req.dto';
-import { UserBaseReqDto } from '../models/dto/req/user-base.req';
-import {ConfigService} from "@nestjs/config";
-import {SourceCode} from "eslint";
-import {Config} from "../../../configs/config-type";
+import { UserRepository } from '../../repository/services/user.repository';
+import { UserID } from '../../../common/types/entity-ids.type';
+import { IUserData } from '../../auth/models/interfaces/user-data.interface';
+import { UserEntity } from '../../../database/entities/user.entity';
 
 
 @Injectable()
 export class UsersService {
   constructor(
-      private readonly configService: ConfigService<Config>,
-  ) {}
-
-  create(createUserDto: UserBaseReqDto) {
-    throw new Error ('this is error')
-    return 'This action adds a new user';
+    private userRepository: UserRepository,
+  ) {
   }
 
-  findAll() {
-    return `This action returns all users`;
+  public async findMe(userData: IUserData) {
+    return `${userData.userId}`;
   }
 
-  findOne(id: number) {
+  public async updateMe(userData:IUserData, dto: UpdateUserReqDto) {
+    return ` This action updates a user${userData.userId}`;
+  }
+
+  public async removeMe(id: UserID) {
     return `This action returns a #${id} user`;
   }
 
-  update(id: number, updateUserDto: UpdateUserReqDto) {
-    return `This action updates a #${id} user`;
+  public async findOne(userId: UserID): Promise<UserEntity> {
+    return await this.userRepository.findOneBy({ id: userId }) as UserEntity;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
-  }
 }

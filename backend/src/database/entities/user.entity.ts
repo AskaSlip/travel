@@ -1,11 +1,14 @@
-import {Column, Entity, PrimaryGeneratedColumn} from "typeorm";
+import {Column, Entity, OneToMany, PrimaryGeneratedColumn} from "typeorm";
 import {RoleEnum} from "../../common/enums/role.enum";
+import {CreateUpdateModel} from "./models/create-update.model";
+import {RefreshTokenEntity} from "./refresh-token.entity";
+import {UserID} from "../../common/types/entity-ids.type";
 
 @Entity('users')
 
-export class UserEntity {
+export class UserEntity extends CreateUpdateModel {
     @PrimaryGeneratedColumn('uuid')
-    id: string;
+    id: UserID;
 
     @Column('text')
     username: string;
@@ -13,12 +16,21 @@ export class UserEntity {
     @Column('text', {unique: true})
     email: string;
 
+    @Column('text')
+    password: string;
+
     @Column('enum', {enum: RoleEnum, default: RoleEnum.GUEST})
     role: RoleEnum;
 
-    @Column('date')
-    birthdate: Date;
+    @Column('date', {nullable: true})
+    birthdate: string;
 
     @Column('boolean', {default: false})
     isActive: boolean;
+
+    @Column('text', {nullable: true})
+    avatar: string;
+
+    @OneToMany(() => RefreshTokenEntity, (entity) => entity.user)
+    refreshTokens: RefreshTokenEntity[];
 }

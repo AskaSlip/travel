@@ -1,10 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Transform, Type } from 'class-transformer';
+import { Transform } from 'class-transformer';
 import {
   IsBoolean,
-  IsDate,
+  IsDateString,
   IsEmail,
-  IsEnum,
+  IsEnum, IsOptional,
   IsString,
   Length,
   Matches,
@@ -40,12 +40,18 @@ export class UserBaseReqDto {
   @ApiProperty({ default: RoleEnum.GUEST })
   role: string;
 
+  @IsOptional()
   @ApiProperty({ example: '2001-01-01', type: String })
-  @IsDate()
-  @Type(() => Date)
-  birthdate: Date;
+  @IsDateString()
+  birthdate?: string;
 
   @ApiProperty({ default: false })
   @IsBoolean()
   isActive: boolean;
+
+
+  @IsOptional()
+  @IsString()
+  @Length(0,2000)
+  avatar?: string;
 }

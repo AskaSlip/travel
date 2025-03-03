@@ -3,43 +3,50 @@ import {
   Controller,
   Delete,
   Get,
-  Param,
+  Param, ParseUUIDPipe,
   Patch,
-  Post,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
-
+import {ApiBearerAuth, ApiTags} from '@nestjs/swagger';
 import { UpdateUserReqDto } from './models/dto/req/update-user.req.dto';
-import { UserBaseReqDto } from './models/dto/req/user-base.req';
 import { UsersService } from './services/users.service';
+import {UserID} from "../../common/types/entity-ids.type";
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { IUserData } from '../auth/models/interfaces/user-data.interface';
+import { SkipAuth } from '../auth/decorators/skip-auth.decorator';
+import { UserBaseResDto } from './models/dto/res/user-base.res.dto';
+import { UserMapper } from './services/user.mapper';
 
 @ApiTags('users')
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post()
-  create(@Body() createUserDto: UserBaseReqDto) {
-    return this.usersService.create(createUserDto);
+  @ApiBearerAuth()
+  @Get('me')
+  public async findMe(
+    @CurrentUser() userData: IUserData,
+  ){
+    return await this.usersService.findMe(userData)
   }
 
-  @Get()
-  findAll() {
-    return this.usersService.findAll();
+  @ApiBearerAuth()
+  @Patch('me')
+  public async updateMe(
+    @CurrentUser() userData: IUserData,
+    @Body() dto: UpdateUserReqDto) {
+    return await this.usersService.updateMe(userData, dto);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.usersService.findOne(+id);
+  @ApiBearerAuth()
+  @Delete('me')
+  public async removeMe(@Param('userId') userId: UserID) {
+    return await this.usersService.removeMe(userId);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserReqDto) {
-    return this.usersService.update(+id, updateUserDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(+id);
+  @SkipAuth()
+  @Get(':userId')
+  public async findOne(@Param('userId', ParseUUIDPipe) userId: UserID): Promise<UserBaseResDto> {
+    const result =  await this.usersService.findOne(userId);
+    return UserMapper.toResDto(result);
   }
 }
