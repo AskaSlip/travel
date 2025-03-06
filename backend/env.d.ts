@@ -24,5 +24,9 @@ declare namespace NodeJS {
     JWT_REFRESH_SECRET: string
     JWT_ACCESS_EXPIRES_IN: number
     JWT_REFRESH_EXPIRES_IN: number
+
+    GOOGLE_CLIENT_ID: string
+    GOOGLE_SECRET: string
+    GOOGLE_CALLBACK_URL: string
   }
 }

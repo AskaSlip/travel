@@ -5,5 +5,4 @@ export class SignInReqDto extends PickType(UserBaseReqDto, [
   'email',
   'password',
 ]) {
-
 }

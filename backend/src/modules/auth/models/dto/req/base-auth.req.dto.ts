@@ -7,7 +7,6 @@ export class BaseAuthReqDto extends PickType(UserBaseReqDto, [
   'email',
   'password',
   'username',
-  'birthdate',
   'avatar',
 
 

@@ -8,6 +8,9 @@ import {JwtModule} from "@nestjs/jwt";
 import {JwtAccessGuard} from "./guards/jwt-access-guard";
 import {APP_GUARD} from "@nestjs/core";
 import { JwtRefreshGuard } from './guards/jwt-refresh-guard';
+import { PassportModule } from '@nestjs/passport';
+import { GoogleAuthGuard } from './guards/google-auth-guard';
+import { GoogleStrategy } from './strategies/google.strategy';
 
 @Module({
     imports: [RedisModule, JwtModule],
@@ -20,7 +23,9 @@ import { JwtRefreshGuard } from './guards/jwt-refresh-guard';
         AuthService,
         AuthCacheService,
         TokenService,
-        JwtRefreshGuard
+        JwtRefreshGuard,
+        GoogleStrategy,
+
     ],
     exports: []
 })

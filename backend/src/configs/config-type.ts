@@ -5,6 +5,7 @@ export type Config = {
   aws: AwsConfig;
   sentry: SentryConfig;
   jwt: JwtConfig;
+  googleOAuth: GoogleOAuthConfig;
 };
 
 export type AppConfig = {
@@ -42,4 +43,10 @@ export type JwtConfig = {
     accessExpiresIn: number;
     refreshSecret: string;
     refreshExpiresIn: number;
+}
+
+export type GoogleOAuthConfig = {
+  clientId: string;
+  clientSecret: string;
+  redirectUri: string;
 }

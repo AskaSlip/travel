@@ -28,7 +28,6 @@ export class UserBaseReqDto {
   @Matches(/^[^\s@]+@([^\s@.,]+\.)+[^\s@.,]{2,}$/)
   email: string;
 
-  //todo check with OAuth if password is optional
   @ApiProperty({ example: '123qwe!@#QWE' })
   @Transform(TransformHelper.cleanSpaces)
   @IsString()

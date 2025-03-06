@@ -11,6 +11,10 @@ import { UserMapper } from '../../users/services/user.mapper';
 import { TokensHelper } from '../helpers/tokens.helper';
 import { IUserData } from '../models/interfaces/user-data.interface';
 import { TokenPairResDto } from '../models/dto/res/token-pair.res.dto';
+import { UserBaseReqDto } from '../../users/models/dto/req/user-base.req';
+import { RoleEnum } from '../../../common/enums/role.enum';
+import { UserID } from '../../../common/types/entity-ids.type';
+import { PasswordReqDto } from '../models/dto/req/password.req.dto';
 
 @Injectable()
 export class AuthService {
@@ -39,6 +43,7 @@ export class AuthService {
   }
 
   public async signIn(dto: SignInReqDto): Promise<AuthResDto> {
+
     const user = await this.userRepository.findOne({
       where: { email: dto.email },
       select: ['id', 'password'],
@@ -86,6 +91,57 @@ export class AuthService {
     );
     return tokens;
   }
+
+
+  public async validateGoogleUser(googleUser:UserBaseReqDto){
+    const user = await this.userRepository.findOneBy({ email: googleUser.email });
+    if(user) return user;
+
+    const userEntity = this.userRepository.create({
+      ...googleUser,
+      password: await bcrypt.hash(googleUser.password, 10),
+      role: RoleEnum.USER,
+      isActive: true,
+    });
+    return await this.userRepository.save(userEntity);
+  }
+
+  public async tokensForGoogle(id: UserID): Promise<TokenPairResDto>{
+    const tokens = await TokensHelper.generateAndSaveTokens(
+      this.tokenService,
+      this.authCacheService,
+      this.refreshTokenRepository,
+      id,
+    );
+    return tokens;
+  }
+
+  public async checkPassword(userData: IUserData, dto: PasswordReqDto): Promise<{message: string}> {
+    const user = await this.userRepository.findOne({
+      where: {email: userData.email},
+      select: ['password'],
+    });
+    if (!user) {
+      throw new ConflictException('User not found');
+    }
+
+    const checkPassword = await bcrypt.compare(dto.password, user.password);
+    if(!checkPassword){
+      throw new ConflictException('Password is incorrect');
+    }
+    return {message: 'you can change your password'};
+  }
+
+  public async changePassword(userData: IUserData, dto: PasswordReqDto): Promise<{message: string}> {
+    const user = await this.userRepository.findOneBy({ email: userData.email });
+    if (!user) {
+      throw new ConflictException('User not found');
+    }
+    const password = await bcrypt.hash(dto.password, 10);
+    await this.userRepository.update(user.id, { password });
+    return {message: 'Password changed'};
+  }
+
 
   private async isEmailExist(email: string) {
     const user = await this.userRepository.findOneBy({ email });
