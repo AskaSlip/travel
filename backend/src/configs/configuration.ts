@@ -48,4 +48,9 @@ export default (): Config => ({
       clientSecret: getEnv('GOOGLE_SECRET'),
       redirectUri: getEnv('GOOGLE_CALLBACK_URL'),
     },
+    mail: {
+      email: getEnv('SMTP_EMAIL'),
+      password: getEnv('SMTP_PASSWORD'),
+      emailForCheck: getEnv('EMAIL_FOR_CHECK'),
+    },
 });

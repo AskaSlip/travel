@@ -8,12 +8,11 @@ import {JwtModule} from "@nestjs/jwt";
 import {JwtAccessGuard} from "./guards/jwt-access-guard";
 import {APP_GUARD} from "@nestjs/core";
 import { JwtRefreshGuard } from './guards/jwt-refresh-guard';
-import { PassportModule } from '@nestjs/passport';
-import { GoogleAuthGuard } from './guards/google-auth-guard';
 import { GoogleStrategy } from './strategies/google.strategy';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
-    imports: [RedisModule, JwtModule],
+    imports: [RedisModule, JwtModule, MailModule],
     controllers: [AuthController],
     providers: [
         {

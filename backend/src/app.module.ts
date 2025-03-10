@@ -11,6 +11,8 @@ import { GlobalExceptionFilter } from './common/filters/global-exception-filter'
 import { LoggerModule } from './modules/logger/logger.module';
 import { RepositoryModule } from './modules/repository/repository.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { MailModule } from './modules/mail/mail.module';
+import { TripsModule } from './modules/trips/trips.module';
 
 @Module({
   imports: [
@@ -26,6 +28,8 @@ import { AuthModule } from './modules/auth/auth.module';
     RedisModule,
     LoggerModule,
     UsersModule,
+    MailModule,
+    TripsModule
   ],
   providers: [
     {

@@ -28,5 +28,9 @@ declare namespace NodeJS {
     GOOGLE_CLIENT_ID: string
     GOOGLE_SECRET: string
     GOOGLE_CALLBACK_URL: string
+
+    SMTP_EMAIL: string
+    SMTP_PASSWORD: string
+    EMAIL_FOR_CHECK: string
   }
 }

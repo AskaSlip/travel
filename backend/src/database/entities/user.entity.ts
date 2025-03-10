@@ -3,6 +3,7 @@ import {RoleEnum} from "../../common/enums/role.enum";
 import {CreateUpdateModel} from "./models/create-update.model";
 import {RefreshTokenEntity} from "./refresh-token.entity";
 import {UserID} from "../../common/types/entity-ids.type";
+import { TripEntity } from './trip.entity';
 
 @Entity('users')
 
@@ -33,4 +34,7 @@ export class UserEntity extends CreateUpdateModel {
 
     @OneToMany(() => RefreshTokenEntity, (entity) => entity.user)
     refreshTokens: RefreshTokenEntity[];
+
+    @OneToMany(() => TripEntity, (entity) => entity.user)
+    trips: TripEntity[];
 }

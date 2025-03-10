@@ -6,6 +6,7 @@ export type Config = {
   sentry: SentryConfig;
   jwt: JwtConfig;
   googleOAuth: GoogleOAuthConfig;
+  mail: MailConfig;
 };
 
 export type AppConfig = {
@@ -49,4 +50,10 @@ export type GoogleOAuthConfig = {
   clientId: string;
   clientSecret: string;
   redirectUri: string;
+}
+
+export type MailConfig = {
+  email: string;
+  password: string;
+  emailForCheck: string;
 }

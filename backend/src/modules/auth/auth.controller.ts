@@ -11,7 +11,9 @@ import { JwtRefreshGuard } from './guards/jwt-refresh-guard';
 import { TokenPairResDto } from './models/dto/res/token-pair.res.dto';
 import { GoogleAuthGuard } from './guards/google-auth-guard';
 import * as process from 'node:process';
-import { PasswordReqDto } from './models/dto/req/password.req.dto';
+import { ResetPasswordReqDto } from './models/dto/req/reset-password.req.dto';
+import { EmailReqDto } from './models/dto/req/email.req.dto';
+import { ChangePasswordReqDto } from './models/dto/req/change-password.req.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -65,25 +67,30 @@ export class AuthController {
         res.redirect(`${process.env.FRONT_URL}/auth/google-redirect?accessToken=${tokens.accessToken}&refreshToken=${tokens.refreshToken}`)
     }
 
-    @ApiBearerAuth()
-    @Post('check-password')
-    public async checkPassword(
-        @CurrentUser() userData: IUserData,
-        @Body() dto: PasswordReqDto
-    ): Promise<{message: string}> {
-        return await this.authService.checkPassword(userData, dto);
-    }
 
     @ApiBearerAuth()
     @Post('change-password')
     public async changePassword(
         @CurrentUser() userData: IUserData,
-        @Body() dto: PasswordReqDto
+        @Body() dto: ChangePasswordReqDto
     ): Promise<{message: string}> {
         return await this.authService.changePassword(userData, dto);
     }
 
-    //todo forgot pass and send to email
+    @SkipAuth()
+    @Post('forgot-password')
+    public async forgotPassword(
+        @Body() dto: EmailReqDto
+    ): Promise<void> {
+        return await this.authService.forgotPassword(dto);
+    }
 
+    @SkipAuth()
+    @Post('reset-password')
+    public async resetPassword(
+        @Body() dto: ResetPasswordReqDto
+    ): Promise<string> {
+        return await this.authService.resetPassword(dto);
+    }
 
 }

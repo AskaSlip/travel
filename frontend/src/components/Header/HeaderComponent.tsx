@@ -4,6 +4,7 @@ import styles from  './Header.module.css';
 
 const HeaderComponent = () => {
 
+  //todo пофіксити баг з рендерингом кнопок, якщо зайшов через гугл
   return(
     <div className={styles.wrap}>
       <div>

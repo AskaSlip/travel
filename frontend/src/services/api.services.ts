@@ -1,17 +1,18 @@
-
 import { ISignUp } from '@/models/ISignUp';
 import { ISignIn } from '@/models/ISignIn';
 import { LocalStorageTokensUpdate } from '@/helpers/localStorageTokensUpdate';
+import { IEmail } from '@/models/IEmail';
+import { IResetPassword } from '@/models/IResetPassword';
+import { ITrip } from '@/models/ITrip';
 
-const options = {
-  method: 'GET',
-  headers: {
-    accept: 'application/json',
-  },
-};
 
 export const getAllUsers = async (): Promise<any> => {
-  const response = await fetch('http://localhost:5000/admin/users', options);
+  const response = await fetch('http://localhost:5000/admin/users', {
+    method: 'GET',
+    headers: {
+      accept: 'application/json',
+    },
+  });
   const data = await response.json();
   return data.data;
 
@@ -79,7 +80,7 @@ const authService = {
         headers: {
           'Content-Type': 'application/json',
           Authorization: accessToken ? `Bearer ${accessToken}` : '',
-        }
+        },
       });
 
       if (!response.ok) {
@@ -90,11 +91,11 @@ const authService = {
       localStorage.removeItem('refreshToken');
 
 
-    }catch(error){
-       console.error('Error:', error);
-        throw error;
-      }
-    },
+    } catch (error) {
+      console.error('Error:', error);
+      throw error;
+    }
+  },
   refresh: async () => {
     try {
       const refreshToken = localStorage.getItem('refreshToken');
@@ -125,4 +126,58 @@ const authService = {
 
 };
 
-export { authService };
+const passwordService = {
+  forgotPassword: async (data: IEmail): Promise<void> => {
+    try {
+      const response = await fetch('http://localhost:5000/auth/forgot-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+    } catch (error) {
+      throw new Error('Failed to send email');
+
+    }
+  },
+
+  resetPassword: async (data: IResetPassword): Promise<void> => {
+    try {
+      const response = await fetch('http://localhost:5000/auth/reset-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+
+    } catch (error) {
+      throw new Error('Failed to reset password');
+    }
+  },
+};
+
+const tripService = {
+  createTrip: async (data: ITrip): Promise<void> => {
+    try {
+      const accessToken = localStorage.getItem('accessToken');
+      await fetch('http://localhost:5000/trips/create-trip', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: accessToken ? `Bearer ${accessToken}` : '',
+        },
+        body: JSON.stringify(data),
+      })
+    } catch (error) {
+      throw new Error('Failed to create trip');
+    }
+  }
+
+
+};
+
+export { authService, passwordService, tripService };
