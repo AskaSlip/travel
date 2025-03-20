@@ -13,6 +13,7 @@ import { RepositoryModule } from './modules/repository/repository.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { MailModule } from './modules/mail/mail.module';
 import { TripsModule } from './modules/trips/trips.module';
+import { TripStopsModule } from './modules/trip-stop/trip-stops.module';
 
 @Module({
   imports: [
@@ -29,7 +30,8 @@ import { TripsModule } from './modules/trips/trips.module';
     LoggerModule,
     UsersModule,
     MailModule,
-    TripsModule
+    TripsModule,
+    TripStopsModule
   ],
   providers: [
     {

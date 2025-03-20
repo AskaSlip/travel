@@ -1,6 +1,7 @@
+"use client"
 import Link from 'next/link';
-import AuthComponent from '@/components/Auth/AuthComponent';
 import styles from  './Header.module.css';
+import AuthComponent from '@/components/Auth/AuthComponent';
 
 const HeaderComponent = () => {
 

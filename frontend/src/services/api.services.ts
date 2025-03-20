@@ -175,8 +175,28 @@ const tripService = {
     } catch (error) {
       throw new Error('Failed to create trip');
     }
+  },
+
+  getUserTrips: async (): Promise <ITrip[]> => {
+    const accessToken = localStorage.getItem('accessToken');
+
+    try{
+      const responce = await fetch('http://localhost:5000/trips/my-trips', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: accessToken ? `Bearer ${accessToken}` : '',
+        }
+      });
+      const data = await responce.json();
+      return data.data;
+    }catch(error){
+      throw new Error('Failed to get user trips');
+    }
+
   }
 
+  //todo trip by id (done, but need to make it here)
 
 };
 
