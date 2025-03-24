@@ -6,6 +6,6 @@ export interface IUser {
   username: string;
   role: RoleEnum;
   birthdate?: string;
-  isActive: boolean;
+  isVerify: boolean;
   avatar?: string;
 }

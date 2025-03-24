@@ -13,7 +13,7 @@ export class UserMapper {
             username: user.username,
             role: user.role,
             birthdate: user.birthdate,
-            isActive: user.isActive,
+            isVerify: user.isVerify,
             avatar: user.avatar,
         }
     }

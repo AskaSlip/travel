@@ -10,6 +10,6 @@ export class UserBaseResDto {
   username: string;
   role: RoleEnum;
   birthdate?: string;
-  isActive: boolean;
+  isVerify: boolean;
   avatar?: string;
 }

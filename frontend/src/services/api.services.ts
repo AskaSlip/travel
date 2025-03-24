@@ -4,6 +4,7 @@ import { LocalStorageTokensUpdate } from '@/helpers/localStorageTokensUpdate';
 import { IEmail } from '@/models/IEmail';
 import { IResetPassword } from '@/models/IResetPassword';
 import { ITrip } from '@/models/ITrip';
+import data from '@react-google-maps/api/src/components/drawing/Data';
 
 
 export const getAllUsers = async (): Promise<any> => {
@@ -38,8 +39,8 @@ const authService = {
       if (result.tokens) {
         localStorage.setItem('accessToken', result.tokens.accessToken);
         localStorage.setItem('refreshToken', result.tokens.refreshToken);
+        window.dispatchEvent(new Event("authChanged"));
       }
-
 
       return result;
     } catch (error) {
@@ -58,13 +59,16 @@ const authService = {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to sign in');
+        const errorData = await response.json();
+        const errorCode = errorData.statusCode;
+        console.log(errorCode, "API");
+        throw new Error(errorCode);
       }
 
       const result = await response.json();
 
       LocalStorageTokensUpdate.updateTokens(result.tokens);
-
+      window.dispatchEvent(new Event("authChanged"))
       return result;
     } catch (error) {
       console.error('Error:', error);
@@ -89,7 +93,7 @@ const authService = {
 
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
-
+      window.dispatchEvent(new Event("authChanged"))
 
     } catch (error) {
       console.error('Error:', error);
@@ -123,6 +127,52 @@ const authService = {
     }
   },
 
+  verifyEmail: async (token: string): Promise<void> => {
+    try {
+      const response = await fetch(`http://localhost:5000/auth/verify-email?token=${token}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        if (response.status === 410) {
+          throw new Error("expired");
+        }
+        throw new Error(errorData.message || "Failed to verify email");
+      }
+
+      const result = await response.json();
+      LocalStorageTokensUpdate.updateTokens(result.tokens);
+      window.dispatchEvent(new Event("authChanged"))
+    } catch (error) {
+      console.error('Error:', error);
+      throw error;
+    }
+  },
+
+  resendConfirmation: async (email: string): Promise<void> => {
+    try {
+      const response = await fetch(`http://localhost:5000/auth/resend-confirmation`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to resend confirmation');
+      }
+
+    } catch (error) {
+      console.error('Error:', error);
+      throw error;
+    }
+  },
+
 
 };
 
@@ -136,6 +186,7 @@ const passwordService = {
         },
         body: JSON.stringify(data),
       });
+
 
     } catch (error) {
       throw new Error('Failed to send email');

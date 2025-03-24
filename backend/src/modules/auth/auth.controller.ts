@@ -1,5 +1,5 @@
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { Body, Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import {AuthService} from "./services/auth.service";
 import {SignUpReqDto} from "./models/dto/req/sign-up.req.dto";
 import {SignInReqDto} from "./models/dto/req/sign-in.req.dto";
@@ -14,15 +14,17 @@ import * as process from 'node:process';
 import { ResetPasswordReqDto } from './models/dto/req/reset-password.req.dto';
 import { EmailReqDto } from './models/dto/req/email.req.dto';
 import { ChangePasswordReqDto } from './models/dto/req/change-password.req.dto';
+import { UserBaseResDto } from '../users/models/dto/res/user-base.res.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
     constructor(private readonly authService: AuthService) {}
 
+    //todo треба змінити так, щоб при реєстрації не видавало токен, а відправляло лист на підтвердження
     @SkipAuth()
     @Post('sign-up')
-    public async signUp(@Body() dto: SignUpReqDto): Promise<AuthResDto> {
+    public async signUp(@Body() dto: SignUpReqDto): Promise<UserBaseResDto> {
         return  await this.authService.signUp(dto);
     }
 
@@ -91,6 +93,22 @@ export class AuthController {
         @Body() dto: ResetPasswordReqDto
     ): Promise<string> {
         return await this.authService.resetPassword(dto);
+    }
+
+    @SkipAuth()
+    @Get('verify-email')
+    public async verifyEmail(
+        @Query('token') token: string
+    ): Promise<AuthResDto> {
+        return await this.authService.verifyEmail(token);
+    }
+
+    @SkipAuth()
+    @Post('resend-confirmation')
+    public async resendConfirmation(
+        @Body('email') email: string
+    ): Promise<void> {
+        return await this.authService.resendConfirmation(email);
     }
 
 }

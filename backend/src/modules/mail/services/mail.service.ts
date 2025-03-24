@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import { MailerService } from '@nestjs-modules/mailer';
 import { UserRepository } from '../../repository/services/user.repository';
 import { ConfigService } from '@nestjs/config';
@@ -15,26 +15,52 @@ export class MailService {
   ) {}
 
   public async sendResetPassword(email: string){
+    await  this.sendEmail(email, 'Reset password', 'reset-password');
+  }
+
+  public async sendEmailAboutIncorrectPassword(email: string){
+    await this.sendEmail(email, 'Incorrect password', 'incorrect-password');
+  }
+
+  public async sendConfirmationEmail(email: string){
     const mailConfig = this.configService.get<MailConfig>('mail');
     const jwtConfig = this.configService.get<JwtConfig>('jwt') as JwtConfig;
     const user = await this.userRepository.findOneBy({ email });
     if(!user){
       throw new BadRequestException('User with this email does not exist');
     }
+    if(user.isVerify){
+      throw new BadRequestException('User already verified');
+    }
 
-    const token = jwt.sign({email}, jwtConfig.accessSecret, {expiresIn: '1h'});
-    const resetLink = `http://localhost:3000/reset-password?token=${token}`;
+    const token = jwt.sign({email}, jwtConfig.accessSecret, {expiresIn: '1d'});
+    const confirmLink = `http://localhost:3000/confirm-redirect?token=${token}`;
+    await this.mailerService.sendMail({
+      to: mailConfig?.emailForCheck,
+      subject: "Confirm your email",
+      template: "user-confirmation",
+      context: { confirmLink }
+    })
+
+  }
+
+ private async sendEmail(email: string, subject: string, template: string){
+   const mailConfig = this.configService.get<MailConfig>('mail');
+   const jwtConfig = this.configService.get<JwtConfig>('jwt') as JwtConfig;
+   const user = await this.userRepository.findOneBy({ email });
+   if(!user){
+     throw new BadRequestException('User with this email does not exist');
+   }
+
+   const token = jwt.sign({email}, jwtConfig.accessSecret, {expiresIn: '1h'});
+   const resetLink = `http://localhost:3000/reset-password?token=${token}`;
 
     await this.mailerService.sendMail({
       to: mailConfig?.emailForCheck,
-      subject: 'Reset password',
-      template: 'reset-password',
-      context: {
-        resetLink
-      }
+      subject,
+      template,
+      context: { resetLink }
     })
-
-
   }
 
 }

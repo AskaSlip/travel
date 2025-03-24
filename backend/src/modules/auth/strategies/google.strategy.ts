@@ -31,7 +31,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
         username: profile.displayName,
         password: password,
         avatar: profile.photos[0]?.value || null,
-        isActive: true,
+        isVerify: true,
         role: RoleEnum.USER
       });
 

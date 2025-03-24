@@ -46,7 +46,7 @@ export class UserBaseReqDto {
 
   @ApiProperty({ default: false })
   @IsBoolean()
-  isActive: boolean;
+  isVerify: boolean;
 
 
   @IsOptional()

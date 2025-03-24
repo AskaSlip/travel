@@ -24,7 +24,7 @@ export class AdminService {
           ...dto,
           password,
           role: RoleEnum.ADMIN,
-          isActive: true,
+        isVerify: true,
         },
       ),
     );

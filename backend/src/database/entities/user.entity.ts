@@ -27,7 +27,7 @@ export class UserEntity extends CreateUpdateModel {
     birthdate: string;
 
     @Column('boolean', {default: false})
-    isActive: boolean;
+    isVerify: boolean;
 
     @Column('text', {nullable: true})
     avatar: string;

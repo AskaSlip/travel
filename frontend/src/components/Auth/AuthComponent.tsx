@@ -2,15 +2,24 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import SignOutComponent from '@/components/SignOut/SignOutComponent';
-
+//todo треба змінити так, щоб при реєстрації не входило в система, а тільки показувао повідомлення про успішну реєстрацію і підтвердження по емейлу
 const AuthComponent = () => {
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const router = useRouter()
 
   useEffect(() => {
-    const accessToken = localStorage.getItem('accessToken');
-    setIsAuthenticated(!!accessToken);
+    const checkAuth = async () => {
+      const accessToken = localStorage.getItem('accessToken');
+      setIsAuthenticated(!!accessToken);
+    }
+
+    checkAuth();
+
+    window.addEventListener("authChanged", checkAuth);
+    return () => {
+      window.removeEventListener("authChanged", checkAuth);
+    };
   }, []);
 
   return (

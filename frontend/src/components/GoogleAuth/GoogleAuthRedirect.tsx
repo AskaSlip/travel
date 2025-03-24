@@ -15,7 +15,7 @@ const GoogleAuthRedirect = () => {
     if (accessToken && refreshToken) {
       LocalStorageTokensUpdate.updateTokens({ accessToken, refreshToken });
 
-      router.replace("/test");
+      router.replace("/");
     } else {
       console.error("Google Login Error: Tokens are missing.");
       router.replace("/auth/sign-in");
