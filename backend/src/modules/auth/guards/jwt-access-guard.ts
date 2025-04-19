@@ -25,9 +25,11 @@ export class JwtAccessGuard implements CanActivate {
 
         const request = context.switchToHttp().getRequest();
         const accessToken = request.get('Authorization')?.split('Bearer ')[1];
+
         if (!accessToken) {
-            throw new UnauthorizedException();
+            throw new UnauthorizedException('Token not here');
         }
+
         const payload = await this.tokenService.verifyToken(
             accessToken,
             TokenType.ACCESS,
@@ -40,13 +42,14 @@ export class JwtAccessGuard implements CanActivate {
             accessToken,
         );
         if (!isAccessTokenExist) {
-            throw new UnauthorizedException();
+            throw new UnauthorizedException('Token not found');
         }
         const user = await this.userRepository.findOneBy({
             id: payload.userId,
         });
+        console.log(user);
         if (!user) {
-            throw new UnauthorizedException();
+            throw new UnauthorizedException('User not found');
         }
 
         request.res.locals.user = UserMapper.toIUserData(user, payload);

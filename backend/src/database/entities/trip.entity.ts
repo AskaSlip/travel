@@ -22,6 +22,11 @@ export class TripEntity extends CreateUpdateModel {
     @Column('text', {nullable: true})
     trip_picture: string;
 
+    @Column({type: 'uuid', nullable: true})
+    editor_id?: UserID;
+
+    @Column({ type: 'text', nullable: true })
+    inviteToken?: string;
 
     @Column()
     user_id: UserID;

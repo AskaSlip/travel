@@ -13,6 +13,12 @@ const HeaderComponent = () => {
         <Link href={'/test'}>test</Link>
         <br/>
         <Link href={'/'}>home</Link>
+        <br/>
+        <Link href={'/change-password'}>change password</Link>
+        <br/>
+        <Link href={'/create-trip'}>create trip</Link>
+        <br/>
+        <Link href={'/trips'}>my trips</Link>
 
       </div>
       <div>

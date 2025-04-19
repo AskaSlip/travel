@@ -1,5 +1,5 @@
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { Body, Controller, Get, Patch, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import {AuthService} from "./services/auth.service";
 import {SignUpReqDto} from "./models/dto/req/sign-up.req.dto";
 import {SignInReqDto} from "./models/dto/req/sign-in.req.dto";
@@ -21,7 +21,6 @@ import { UserBaseResDto } from '../users/models/dto/res/user-base.res.dto';
 export class AuthController {
     constructor(private readonly authService: AuthService) {}
 
-    //todo треба змінити так, щоб при реєстрації не видавало токен, а відправляло лист на підтвердження
     @SkipAuth()
     @Post('sign-up')
     public async signUp(@Body() dto: SignUpReqDto): Promise<UserBaseResDto> {
@@ -75,8 +74,8 @@ export class AuthController {
     public async changePassword(
         @CurrentUser() userData: IUserData,
         @Body() dto: ChangePasswordReqDto
-    ): Promise<{message: string}> {
-        return await this.authService.changePassword(userData, dto);
+    ): Promise<void> {
+        await this.authService.changePassword(userData, dto);
     }
 
     @SkipAuth()

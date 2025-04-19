@@ -10,7 +10,7 @@ export class TripStopsEntity extends CreateUpdateModel {
     id: TripStopID;
 
     @Column('text')
-    location: string;
+    key: string;
 
     @Column('text', {nullable: true})
     notes: string;
@@ -21,6 +21,11 @@ export class TripStopsEntity extends CreateUpdateModel {
     @Column('text')
     lng: number
 
+    @Column('text', {nullable: true})
+    locality: string;
+
+    @Column('text', {nullable: true})
+    image?: string;
 
     @Column()
     trip_id: TripID;

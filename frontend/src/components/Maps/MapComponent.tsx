@@ -1,125 +1,200 @@
-"use client"
-import { AdvancedMarker, APIProvider, Map, MapCameraChangedEvent, MapMouseEvent } from '@vis.gl/react-google-maps';
-import PoiMarkers from '@/components/Maps/PoiMarkers';
-import { useEffect, useRef, useState } from 'react';
+'use client';
+import {
+  AdvancedMarker,
+  Map,
+  MapMouseEvent,
+} from '@vis.gl/react-google-maps';
+import { FC, useEffect, useState } from 'react';
 import { IUserMarker } from '@/models/IUserMarker';
 import SearchBox from '@/components/Maps/SearchBox';
+import PinModal from '@/components/Maps/PinModal';
+import { tripStopService } from '@/services/api.services';
+import { ITripStop } from '@/models/ITripStop';
+import styles from './MapComponent.module.css';
+import DirectionCreator from '@/components/Maps/DirectionCreator';
 
-const googleMapsLibraries: ('geometry' | 'places' | 'drawing' | 'visualization')[] = ['places'];
-type Poi ={ key: string, location: google.maps.LatLngLiteral }
-const locations: Poi[] = [
-  // {key: 'operaHouse', location: { lat: -33.8567844, lng: 151.213108  }},
-  // {key: 'tarongaZoo', location: { lat: -33.8472767, lng: 151.2188164 }},
-  // {key: 'manlyBeach', location: { lat: -33.8209738, lng: 151.2563253 }},
-  // {key: 'hyderPark', location: { lat: -33.8690081, lng: 151.2052393 }},
-  // {key: 'theRocks', location: { lat: -33.8587568, lng: 151.2058246 }},
-  // {key: 'circularQuay', location: { lat: -33.858761, lng: 151.2055688 }},
-  // {key: 'harbourBridge', location: { lat: -33.852228, lng: 151.2038374 }},
-  // {key: 'kingsCross', location: { lat: -33.8737375, lng: 151.222569 }},
-  // {key: 'botanicGardens', location: { lat: -33.864167, lng: 151.216387 }},
-  // {key: 'museumOfSydney', location: { lat: -33.8636005, lng: 151.2092542 }},
-  // {key: 'maritimeMuseum', location: { lat: -33.869395, lng: 151.198648 }},
-  // {key: 'kingStreetWharf', location: { lat: -33.8665445, lng: 151.1989808 }},
-  // {key: 'aquarium', location: { lat: -33.869627, lng: 151.202146 }},
-  // {key: 'darlingHarbour', location: { lat: -33.87488, lng: 151.1987113 }},
-  // {key: 'barangaroo', location: { lat: -33.8605523, lng: 151.1972205 }},
-];
+interface IProps {
+  children?: React.ReactNode;
+  tripId: string;
+  tripStops?: ITripStop[];
+  setTripStops?: (tripStops: ITripStop[] | ((prev: ITripStop[]) => ITripStop[])) => void;}
 
-const MapComponent = () => {
+const textAreas = {
+  title: 'Create a new stop to your trip',
+  description: 'Add some notes about your stop',
+  saveBtn: 'Save',
+  deleteBtn: 'Delete',
+};
 
-  const [isClient, setIsClient] = useState(false);
-  const [latitude, setLatitude] = useState<number>();
-  const [longitude, setLongitude] = useState<number>();
-  const [address, setAddress] = useState<string>("");
-  const [pois, setPois] = useState<Poi[]>([]);
+const map_id = process.env.NEXT_PUBLIC_GOOGLE_MAPS_ID as string;
+
+const MapComponent: FC<IProps> = ({ tripId, children, tripStops, setTripStops }) => {
+
+  const [isClient, setIsClient] = useState<boolean>(false);
+  const [userMarker, setUserMarker] = useState<IUserMarker[]>([]);
+  const [selectedMarker, setSelectedMarker] = useState<IUserMarker | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+
+
+  // useEffect(() => {
+  //   if (trip?.tripStops?.length) {
+  //     const stops = trip.tripStops.map((stop) => ({
+  //       ...stop,
+  //       key: stop.key,
+  //       lat: Number(stop.lat),
+  //       lng: Number(stop.lng),
+  //
+  //     }));
+  //     setPois(stops || []);
+  //   }
+  // }, [trip, trip.tripStops]);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string;
-  const map_id = process.env.NEXT_PUBLIC_GOOGLE_MAPS_ID as string;
 
-
-  const [userMarker, setUserMarker] = useState<IUserMarker[]>([]);
-
-  const onMapClick = (ev: MapMouseEvent) => {
-    const latLng = ev.detail.latLng
-
-    if (latLng) {
-      setUserMarker((current: any) => [
-        ...current,
-        {
-          lat: latLng.lat,
-          lng: latLng.lng
+  //todo not sure that I will need it (locality)
+  const getLocality = (latLng: google.maps.LatLngLiteral) => {
+    const geocoder = new window.google.maps.Geocoder();
+    return new Promise<{ locality: string; name: string }>((resolve, reject) => {
+      geocoder.geocode({ location: latLng }, (results, status) => {
+        if (status === google.maps.GeocoderStatus.OK && results) {
+          const localityResult = results.find(result =>
+            result.types.includes('locality'),
+          );
+          const locality = localityResult ? localityResult.address_components[0].long_name : 'unknown';
+          const name = results[0]?.formatted_address || 'unknown';
+          resolve({ locality, name });
+        } else {
+          reject('no info about locality');
         }
-      ]);
-      console.log(latLng);
-
-    }else {
-      console.error('No latLng found in event');
-    }
-
+      });
+    });
   };
 
+
+  const onMapClick = async (ev: MapMouseEvent) => {
+    const latLng = ev.detail.latLng;
+    if (latLng) {
+      try {
+        const { locality, name } = await getLocality(latLng);
+        const newMarker = { lat: latLng.lat, lng: latLng.lng, name, locality };
+        setUserMarker((prev) => [...prev, newMarker]);
+        setSelectedMarker(newMarker);
+        setIsModalOpen(true);
+      } catch (error) {
+        console.error('Помилка при отриманні locality and name:', error);
+      }
+    }
+  };
+
+  console.log('selected', selectedMarker);
   console.log(userMarker);
 
-  const handleMarkerClickDelete = (index: number) => {
-    setUserMarker((current: any) => current.filter((_: any, i: number) => i !== index));
+  const handleMarkerClick = (marker: IUserMarker) => {
+    console.log('Клік на маркер', marker);
+    setSelectedMarker(marker);
+    setIsModalOpen(true);
   };
 
-  //test area ---------------
+  const handleSave = (data:
+                        | { key: string; image?: string | null; notes?: string | null }
+                        | { image?: string | null; key?: string; notes?: string | null }
+  ) => {
+    if (!selectedMarker || !data.key) return;
 
-//todo зробити це після беку
-//   useEffect(() => {
-//     if (latitude && longitude && address) {
-//       setPois(
-//         { key: address, location: { lat: latitude, lng: longitude } }
-//       );
-//     }
-//   }, [latitude, longitude, address]);
+    void tripStopService.createTripStop(tripId, {
+      key: data.key,
+      notes: data.notes ?? '',
+      image: data.image ?? '',
+      lat: selectedMarker.lat,
+      lng: selectedMarker.lng,
+      locality: selectedMarker.locality,
+    }).then((newStop) => {
+      setUserMarker((current) =>
+        current.filter(
+          (m) => m.lat !== selectedMarker.lat || m.lng !== selectedMarker.lng,
+        )
+      );
 
+      const newPoi: ITripStop = {
+        id: newStop.id,
+        key: newStop.key,
+        lat: Number(newStop.lat),
+        lng: Number(newStop.lng),
+      };
+      if (setTripStops) {
+        setTripStops((prev) => [...(prev || []), newPoi]);
+      }
+      setSelectedMarker(null);
+      setIsModalOpen(false);
+      console.log('Збережено:', data);
+    }).catch ((error) => {
+      console.error('Error while saving', error);
+    })
+  };
 
-//-----------------------
+  const handleMarkerDelete = () => {
+    if (!selectedMarker) return;
+    setUserMarker((current) =>
+      current.filter(
+        (m) => m.lat !== selectedMarker.lat || m.lng !== selectedMarker.lng,
+      ),
+    );
+    setIsModalOpen(false);
+  };
+
+  const center = tripStops?.[0]
+    ? { lat: tripStops[0].lat, lng: tripStops[0].lng }
+    : { lat: 0, lng: 0 };
+
   if (!isClient) {
     return null;
   }
 
-    return (
+  return (
+<div className={styles.wrap}>
+      <h1>Map</h1>
+      <div style={{ width: '100%', height: '100%' }}>
+        <Map
+          style={{ width: '800px', height: '500px' }}
+          defaultZoom={13}
+          defaultCenter={center}
+          mapId={map_id}
+          onClick={onMapClick}
 
-          <APIProvider
-            apiKey={key}
-            onLoad={() => console.log('Maps API has loaded.')}
-            libraries={googleMapsLibraries}
-          >
-          <h1>Map</h1>
-            <div style={{ width: "100%", height: "500px" }}>
-              <Map
-                style={{ width: "800px", height: "500px" }}
-                defaultZoom={13}
-                defaultCenter={{ lat: -33.860664, lng: 151.208138 }}
-                mapId={map_id}
-                onClick={onMapClick}
-                >
-                <SearchBox setAddress={setAddress} address={address} setLatitude={setLatitude} setLongitude={setLongitude} latitude={latitude ?? 0} longitude={longitude ?? 0}/>
-                <PoiMarkers pois={pois} />
-                {userMarker.map((marker:any, index: number) => (
-                  <AdvancedMarker
-                    key={index}
-                    position={{ lat: marker.lat, lng: marker.lng }}
-                    onClick={() => handleMarkerClickDelete(index)}
-                  />
-                ))}
-              </Map>
-              <div>
-                <span>Address: {address}</span>
-                <span>LAt: {latitude}</span>
-                <span>Lng: {longitude}</span>
-              </div>
-            </div>
-          </APIProvider>
+        >
+          <SearchBox
+            onPlaceSelect={(latLng, name, locality) => {
+              const newMarker = { lat: latLng.lat, lng: latLng.lng, name, locality };
+              setUserMarker((prev) => [...prev, newMarker]);
+              setSelectedMarker(newMarker);
+              setIsModalOpen(true);
+              console.log(newMarker);
+            }}
+          />
+          {children}
+          {userMarker.map((marker: IUserMarker, index: number) => (
+            <AdvancedMarker
+              key={index}
+              position={{ lat: marker.lat, lng: marker.lng }}
+              onClick={() => handleMarkerClick(marker)}
+            />
+          ))}
+          {tripStops && <DirectionCreator tripStops={tripStops}/>}
+        </Map>
+        <PinModal onSaveAction={handleSave}
+                  onDeleteAction={handleMarkerDelete}
+                  open={isModalOpen}
+                  onOpenChangeAction={setIsModalOpen}
+                  textAreas={textAreas}
+                  mode="create"
+        />
 
-    )
-}
+      </div>
+</div>
+  );
+};
 
 export default MapComponent;

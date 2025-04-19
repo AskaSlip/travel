@@ -1,7 +1,10 @@
+import { ITripStop } from '@/models/ITripStop';
+
 export interface ITrip {
-  id: number;
+  id?: string;
   trip_name: string;
-  description?: string;
-  date_of_trip?: string;
-  trip_picture?: string;
+  description?: string | null;
+  date_of_trip?: Date | null;
+  trip_picture?: string | null;
+  tripStops?: ITripStop[];
 }

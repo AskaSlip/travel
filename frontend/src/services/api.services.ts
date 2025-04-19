@@ -4,7 +4,8 @@ import { LocalStorageTokensUpdate } from '@/helpers/localStorageTokensUpdate';
 import { IEmail } from '@/models/IEmail';
 import { IResetPassword } from '@/models/IResetPassword';
 import { ITrip } from '@/models/ITrip';
-import data from '@react-google-maps/api/src/components/drawing/Data';
+import { IChangePassword } from '@/models/IChangePassword';
+import { ITripStop, ITripStopUpdate } from '@/models/ITripStop';
 
 
 export const getAllUsers = async (): Promise<any> => {
@@ -33,16 +34,6 @@ const authService = {
       if (!response.ok) {
         throw new Error('Failed to sign up');
       }
-
-      const result = await response.json();
-
-      if (result.tokens) {
-        localStorage.setItem('accessToken', result.tokens.accessToken);
-        localStorage.setItem('refreshToken', result.tokens.refreshToken);
-        window.dispatchEvent(new Event("authChanged"));
-      }
-
-      return result;
     } catch (error) {
       console.error('Error:', error);
       throw error;
@@ -67,6 +58,7 @@ const authService = {
 
       const result = await response.json();
 
+      // localStorage.setItem("token_exp", String(Date.now() + 30 * 24 * 60 * 60 * 1000));
       LocalStorageTokensUpdate.updateTokens(result.tokens);
       window.dispatchEvent(new Event("authChanged"))
       return result;
@@ -93,6 +85,7 @@ const authService = {
 
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
+      localStorage.removeItem('token_exp');
       window.dispatchEvent(new Event("authChanged"))
 
     } catch (error) {
@@ -103,6 +96,10 @@ const authService = {
   refresh: async () => {
     try {
       const refreshToken = localStorage.getItem('refreshToken');
+
+      if (!refreshToken) {
+        throw new Error('No refresh token');
+      }
 
       const response = await fetch('http://localhost:5000/auth/refresh', {
         method: 'POST',
@@ -119,6 +116,8 @@ const authService = {
       const result = await response.json();
 
       LocalStorageTokensUpdate.updateTokens(result);
+      localStorage.setItem("token_exp", String(Date.now() + 30 * 24 * 60 * 60 * 1000));
+      window.dispatchEvent(new Event("authChanged"))
 
       return result;
     } catch (error) {
@@ -126,7 +125,6 @@ const authService = {
       throw error;
     }
   },
-
   verifyEmail: async (token: string): Promise<void> => {
     try {
       const response = await fetch(`http://localhost:5000/auth/verify-email?token=${token}`, {
@@ -152,7 +150,6 @@ const authService = {
       throw error;
     }
   },
-
   resendConfirmation: async (email: string): Promise<void> => {
     try {
       const response = await fetch(`http://localhost:5000/auth/resend-confirmation`, {
@@ -172,8 +169,6 @@ const authService = {
       throw error;
     }
   },
-
-
 };
 
 const passwordService = {
@@ -187,9 +182,16 @@ const passwordService = {
         body: JSON.stringify(data),
       });
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        const errorCode = errorData.statusCode;
+        console.log(errorCode, "API");
+        throw new Error(errorCode);
+      }
+
 
     } catch (error) {
-      throw new Error('Failed to send email');
+      throw error;
 
     }
   },
@@ -204,18 +206,23 @@ const passwordService = {
         body: JSON.stringify(data),
       });
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        const errorCode = errorData.statusCode;
+        console.log(errorCode, "API");
+        throw new Error(errorCode);
+      }
 
     } catch (error) {
-      throw new Error('Failed to reset password');
+      throw error;
     }
   },
-};
 
-const tripService = {
-  createTrip: async (data: ITrip): Promise<void> => {
+  changePassword: async (data: IChangePassword): Promise<void> => {
     try {
       const accessToken = localStorage.getItem('accessToken');
-      await fetch('http://localhost:5000/trips/create-trip', {
+
+      const response = await fetch('http://localhost:5000/auth/change-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -223,15 +230,50 @@ const tripService = {
         },
         body: JSON.stringify(data),
       })
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        const errorCode = errorData.statusCode;
+        console.log(errorCode, "API");
+        throw new Error(errorCode);
+
+      }
+
+    } catch (error: any) {
+      console.error('Error:', error);
+      throw error;
+    }
+  }
+};
+
+const tripService = {
+  createTrip: async (data: ITrip): Promise<void> => {
+    try {
+      const accessToken = localStorage.getItem('accessToken');
+      const response = await fetch('http://localhost:5000/trips/create-trip', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: accessToken ? `Bearer ${accessToken}` : '',
+        },
+        body: JSON.stringify(data),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        const errorCode = errorData.statusCode;
+        console.log(errorCode, "API");
+        throw new Error(errorCode);
+      }
     } catch (error) {
-      throw new Error('Failed to create trip');
+      throw error;
     }
   },
 
-  getUserTrips: async (): Promise <ITrip[]> => {
+  getUserTrips: async (): Promise<ITrip[]> => {
     const accessToken = localStorage.getItem('accessToken');
 
-    try{
+    try {
       const responce = await fetch('http://localhost:5000/trips/my-trips', {
         method: 'GET',
         headers: {
@@ -241,14 +283,129 @@ const tripService = {
       });
       const data = await responce.json();
       return data.data;
-    }catch(error){
+    } catch (error) {
       throw new Error('Failed to get user trips');
     }
 
-  }
+  },
 
   //todo trip by id (done, but need to make it here)
+  getTripById: async (id: string): Promise<ITrip> => {
+    const accessToken = localStorage.getItem('accessToken');
 
-};
+    try {
+      const response = await fetch(`http://localhost:5000/trips/${id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: accessToken ? `Bearer ${accessToken}` : '',
+        }
+      });
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      throw new Error('Failed to get trip by id');
+    }
+  },
 
-export { authService, passwordService, tripService };
+  getTripStops: async (tripId: string): Promise<ITripStop[]> => {
+    const accessToken = localStorage.getItem('accessToken');
+
+    try {
+      const response = await fetch(`http://localhost:5000/trips/${tripId}/trip-stops`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: accessToken ? `Bearer ${accessToken}` : '',
+        }
+      });
+      const data = await response.json();
+      return data.data;
+    } catch (error) {
+      throw new Error('Failed to get trip stops');
+    }
+  }
+}
+
+  const tripStopService = {
+    createTripStop: async (tripId: string, data: any): Promise<ITripStop> => {
+      const accessToken = localStorage.getItem('accessToken');
+
+      try {
+        const response = await fetch(`http://localhost:5000/trip-stop/create-stop/${tripId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: accessToken ? `Bearer ${accessToken}` : '',
+          },
+          body: JSON.stringify(data),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          const errorCode = errorData.statusCode;
+          console.log(errorCode, "API");
+          throw new Error(errorCode);
+        }
+
+        const result = await response.json();
+        return result;
+      } catch (error) {
+        throw error;
+      }
+    },
+    updateTripStop: async (tripStopId: string, data: ITripStopUpdate): Promise<ITripStop> => {
+      const accessToken = localStorage.getItem('accessToken');
+
+      try {
+        const response = await fetch(`http://localhost:5000/trip-stop/${tripStopId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: accessToken ? `Bearer ${accessToken}` : '',
+          },
+          body: JSON.stringify(data),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          const errorCode = errorData.statusCode;
+          console.log(errorCode, "API");
+          throw new Error(errorCode);
+        }
+
+        const result = await response.json();
+        return result;
+      } catch (error) {
+        throw error;
+      }
+    },
+
+    deleteTripStop: async (tripStopId: string): Promise<void> => {
+      const accessToken = localStorage.getItem('accessToken');
+
+      try {
+        const response = await fetch(`http://localhost:5000/trip-stop/${tripStopId}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: accessToken ? `Bearer ${accessToken}` : '',
+          },
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          const errorCode = errorData.statusCode;
+          console.log(errorCode, "API");
+          throw new Error(errorCode);
+        }
+
+      } catch (error) {
+        throw error;
+      }
+    }
+  }
+
+
+
+export { authService, passwordService, tripService, tripStopService };

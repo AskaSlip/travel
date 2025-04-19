@@ -1,9 +1,9 @@
 import {
   Body,
   Controller, Delete, Get, Param, Patch,
-  Post, Query,
+  Post, Query, UploadedFile, UseInterceptors,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { IUserData } from '../auth/models/interfaces/user-data.interface';
 import { TripsService } from './services/trips.service';
@@ -13,7 +13,12 @@ import { TripID } from '../../common/types/entity-ids.type';
 import { TripMapper } from './services/trip.mapper';
 import { ListTripsQueryDto } from './models/dto/req/list-trips-query.dto';
 import { ListTripsResDto } from './models/dto/res/list-trips.res.dto';
-//todo update here with roles
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiFile } from '../../common/decorators/api-file.decorator';
+import { ListTripStopsQueryDto } from '../trip-stop/models/dto/req/list-trip-stops-query.dto';
+import { ListTripStopsResDto } from '../trip-stop/models/dto/res/list-trip-stops.res.dto';
+import { TripStopMapper } from '../trip-stop/services/trip-stop.mapper';
+//todo update here with role
 @ApiTags('trips')
 @Controller('trips')
 export class TripsController {
@@ -51,6 +56,17 @@ export class TripsController {
     const [entities, total] = await this.tripsService.getAllTrips(userData, query);
     return TripMapper.toResDtoList(entities, total, query);
   }
+
+  @ApiBearerAuth()
+  @Post('join')
+  async joinTrip(
+    @Query('token') token: string,
+    @CurrentUser() userData: IUserData,
+  ): Promise<{ message: string }> {
+    await this.tripsService.joinTrip(token, userData);
+    return { message: 'You are now an editor of this trip.' };
+  }
+
 
 //user
   @ApiBearerAuth()
@@ -116,5 +132,52 @@ export class TripsController {
     @Param('tripId') tripId: TripID
   ): Promise<void> {
     await this.tripsService.deleteTripById(userData, tripId);
+  }
+
+  @ApiBearerAuth()
+  @Get(':tripId/trip-stops')
+  public async getTripStops(
+    @CurrentUser() userData: IUserData,
+    @Param('tripId') tripId: TripID,
+  @Query() query: ListTripStopsQueryDto
+): Promise<ListTripStopsResDto> {
+    const [entities, total] = await this.tripsService.getTripStops(userData, tripId, query);
+    return TripStopMapper.toResDtoList(entities, total, query);
+  }
+
+
+  @ApiBearerAuth()
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('trip_picture'))
+  @ApiFile('trip_picture', false, true)
+  @Post(':tripId/image')
+  public async uploadImage(
+    @CurrentUser() userData: IUserData,
+    @UploadedFile() file: Express.Multer.File,
+    @Param('tripId') tripId: TripID
+  ): Promise<TripResDto> {
+    const result = await this.tripsService.uploadImage(userData, file, tripId);
+    return TripMapper.toResDto(result);
+  }
+
+  @ApiBearerAuth()
+  @Delete(':tripId/image')
+  public async deleteImage(
+    @CurrentUser() userData: IUserData,
+    @Param('tripId') tripId: TripID
+  ): Promise<void> {
+    await this.tripsService.deleteImage(userData, tripId);
+  }
+
+
+
+  @ApiBearerAuth()
+  @Post(':tripId/invite')
+  async generateInvite(
+    @Param('tripId') tripId: TripID,
+    @CurrentUser() userData: IUserData,
+  ): Promise<{inviteLink: string}> {
+    const inviteLink = await this.tripsService.generateInvite(tripId, userData);
+    return { inviteLink };
   }
 }

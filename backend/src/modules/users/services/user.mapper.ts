@@ -30,6 +30,7 @@ export class UserMapper {
         return {
             userId: user.id,
             email: user.email,
+            role: user.role,
         }
     }
 

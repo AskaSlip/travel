@@ -1,8 +1,9 @@
 'use client';
 
 import { SubmitHandler, useForm } from 'react-hook-form';
-import { ITrip } from '@/models/ITrip';
 import { tripService } from '@/services/api.services';
+import { CreateTripFormData, createTripSchema } from '@/validator/validation';
+import { zodResolver } from '@hookform/resolvers/zod';
 //todo add calender to choose date
 //todo add photo upload
 const CreateTripComponent = () => {
@@ -11,9 +12,11 @@ const CreateTripComponent = () => {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<ITrip>();
+  } = useForm<CreateTripFormData>({
+    resolver: zodResolver(createTripSchema)
+  });
 
-  const onSubmitCreateTripForm: SubmitHandler<ITrip> = async (data): Promise<void> => {
+  const onSubmitCreateTripForm: SubmitHandler<CreateTripFormData> = async (data): Promise<void> => {
     try{
       await tripService.createTrip(data);
       console.log('Trip created');
@@ -30,7 +33,9 @@ const CreateTripComponent = () => {
         {errors?.trip_name && <span>This field is required</span>}
         <input type={'text'} {...register('description')} placeholder={'Enter some description'} />
         <input type={'text'} {...register('date_of_trip')} placeholder={'choose the date'} />
+        {errors?.date_of_trip && <span>{errors.date_of_trip.message}</span>}
         <input type={'text'} {...register('trip_picture')} placeholder={'choose the picture'} />
+        {errors?.trip_picture && <span>{errors.trip_picture.message}</span>}
 
         <button type={'submit'}>Create trip</button>
       </form>

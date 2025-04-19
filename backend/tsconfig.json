@@ -18,6 +18,7 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
     "moduleResolution": "node",
-    "types": ["node"]
+//    "types": ["node", "express", "multer"],
+    "typeRoots": ["node_modules/@types"]
   }
 }

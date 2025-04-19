@@ -34,7 +34,6 @@ services:
       - MINIO_ROOT_USER=user
       - MINIO_ROOT_PASSWORD=password
 
-
 volumes:
   travel-planner-api-db:
   travel-planner-api-s3:

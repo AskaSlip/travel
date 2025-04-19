@@ -1,4 +1,10 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 
 import { IUserData } from '../../auth/models/interfaces/user-data.interface';
 import { TripRepository } from '../../repository/services/trip.repository';
@@ -7,8 +13,16 @@ import { TripResDto } from '../models/dto/res/trip.res.dto';
 import { UserRepository } from '../../repository/services/user.repository';
 import { TripID, UserID } from '../../../common/types/entity-ids.type';
 import { ListTripsQueryDto } from '../models/dto/req/list-trips-query.dto';
-import { ListTripsResDto } from '../models/dto/res/list-trips.res.dto';
 import { TripEntity } from '../../../database/entities/trip.entity';
+import * as jwt from 'jsonwebtoken';
+import { ConfigService } from '@nestjs/config';
+import { AwsConfig, Config, JwtConfig } from '../../../configs/config-type';
+import { FileStorageService } from '../../file-storage/services/file-storage.service';
+import { ContentType } from '../../file-storage/enums/content-type.enum';
+import { keyFromUrl } from '../../../common/helpers/upload-file.helper';
+import { ListTripStopsQueryDto } from '../../trip-stop/models/dto/req/list-trip-stops-query.dto';
+import { TripStopsEntity } from '../../../database/entities/trip-stop.entity';
+import { TripStopsRepository } from '../../repository/services/trip-stops.repository';
 
 
 @Injectable()
@@ -16,18 +30,20 @@ export class TripsService {
   constructor(
     private readonly tripRepository: TripRepository,
     private readonly userRepository: UserRepository,
+    private readonly configService: ConfigService<Config>,
+    private readonly fileStorageService: FileStorageService,
+  private readonly tripStopsRepository: TripStopsRepository,
   ) {}
 
   public async createTrip(userData: IUserData, dto: TripReqDto): Promise<TripResDto> {
     await this.isUserExist(userData.userId);
 
-    const trip = await this.tripRepository.save(
+    return await this.tripRepository.save(
       this.tripRepository.create({
         ...dto,
         user_id: userData.userId,
       })
     )
-    return trip;
   }
 
 
@@ -41,6 +57,15 @@ export class TripsService {
     return await this.tripRepository.findAllForAdmin(query);
   }
 
+  public async getTripStops(userData: IUserData, tripId: TripID, query: ListTripStopsQueryDto): Promise<[TripStopsEntity[], number]> {
+    await this.isUserExist(userData.userId);
+    const trip = await this.tripRepository.findOneBy({ id: tripId });
+    if (!trip) {
+      throw new BadRequestException('Trip not found')
+    }
+    return await this.tripStopsRepository.findAll({ ...query, trip_id: tripId });
+  }
+
   public async getTripById(userData: IUserData, tripId: TripID): Promise<TripEntity> {
     await this.isUserExist(userData.userId);
 
@@ -52,12 +77,11 @@ export class TripsService {
       throw new BadRequestException('Trip not found')
     }
 
-    const tripWithStops = {
+    return {
       ...trip,
       tripStops: trip.tripStops || [],
     }
 
-    return tripWithStops;
   }
 
   public async deleteTripById(userData: IUserData, tripId: TripID): Promise<void> {
@@ -87,8 +111,80 @@ export class TripsService {
     };
   }
 
+  public async uploadImage(userData: IUserData, file: Express.Multer.File, tripId: TripID): Promise<TripEntity>{
+    const awsConfig = this.configService.get<AwsConfig>('aws') as AwsConfig;
+    await this.isUserExist(userData.userId);
+    const trip = await this.tripRepository.findOneBy({ id: tripId });
+    if (!trip) {
+      throw new BadRequestException('Trip not found');
+    }
+    const pathToFile = await this.fileStorageService.uploadFile(
+      file,
+      ContentType.IMAGE,
+      tripId,
+    )
+    if (trip.trip_picture) {
+      const key = keyFromUrl(trip.trip_picture, awsConfig)
+      await this.fileStorageService.deleteFile(key);
+    }
+    const imageUrl = `${awsConfig.endpoint}/${awsConfig.bucketName}/${pathToFile}`;
+    return await this.tripRepository.save({
+      ...trip,
+      trip_picture: imageUrl,
+    })
+  }
+
+  public async deleteImage(userData: IUserData, tripId: TripID): Promise<void> {
+    const awsConfig = this.configService.get<AwsConfig>('aws') as AwsConfig;
+    await this.isUserExist(userData.userId);
+    const trip = await this.tripRepository.findOneBy({ id: tripId });
+    if (!trip) {
+      throw new BadRequestException('Trip not found');
+    }
+    if (trip.trip_picture) {
+    const key = keyFromUrl(trip.trip_picture, awsConfig)
+      await this.fileStorageService.deleteFile(key);
+      await this.tripRepository.save({
+        ...trip,
+        trip_picture: '',
+      });
+    }
+  }
 
 
+
+  public async generateInvite(tripId: TripID, userData: IUserData): Promise<string> {
+    await this.isUserExist(userData.userId);
+    const config = this.configService.get<JwtConfig>('jwt') as JwtConfig;
+
+    const trip = await this.tripRepository.findOneBy({ id: tripId });
+    if (!trip || trip.user_id !== userData.userId) {
+      throw new ForbiddenException('Only trip owner can generate invite link');
+    }
+    const inviteToken = jwt.sign({tripId}, config.accessSecret, {expiresIn: '24hr'})
+
+    await this.tripRepository.update(tripId, {inviteToken});
+    return `${process.env.FRONTEND_URL}/invite/${tripId}?token=${inviteToken}`;
+  }
+
+  public async joinTrip(token: string, userData: IUserData): Promise<void>{
+    const config = this.configService.get<JwtConfig>('jwt') as JwtConfig;
+
+    try {
+      const decoded: any = jwt.verify(token, config.accessSecret) as { tripId: TripID };
+      const trip = await this.tripRepository.findOneBy({ id: decoded.tripId });
+
+      if (!trip) {
+        throw new NotFoundException('Trip not found');
+      }
+
+      if(!trip.editor_id){
+        await this.tripRepository.update(decoded.tripId, { editor_id: userData.userId });
+      }
+    }catch(error){
+      throw new ForbiddenException("Invalid or expired invite link")
+    }
+  }
 
 
 

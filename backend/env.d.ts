@@ -15,6 +15,10 @@ declare namespace NodeJS {
 
     AWS_S3_ACCESS_KEY: string;
     AWS_S3_SECRET_KEY: string;
+    AWS_S3_BUCKET_NAME: string;
+    AWS_S3_REGION: string;
+    AWS_S3_ACL: string;
+    AWS_S3_ENDPOINT: string;
 
     SENTRY_DSN: string;
     SENTRY_ENV: string;

@@ -1,9 +1,10 @@
 "use client"
 import { useRouter, useSearchParams } from 'next/navigation';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import { IResetPassword } from '@/models/IResetPassword';
 import { passwordService } from '@/services/api.services';
 import { useState } from 'react';
+import { ResetPasswordFormData, resetPasswordSchema } from '@/validator/validation';
+import { zodResolver } from '@hookform/resolvers/zod';
 
 const ResetPasswordComponent = () => {
 
@@ -22,9 +23,11 @@ const ResetPasswordComponent = () => {
     watch,
     getValues,
     formState: { errors },
-  } = useForm<IResetPassword>()
+  } = useForm<ResetPasswordFormData>({
+    resolver: zodResolver(resetPasswordSchema)
+  })
 
-  const onSubmitResetPasswordFormHandler: SubmitHandler<IResetPassword> = async (data) => {
+  const onSubmitResetPasswordFormHandler: SubmitHandler<ResetPasswordFormData> = async (data) => {
     try{
       await passwordService.resetPassword({ resetToken: token, password: data.password });
       console.log('Password reset successfully');
@@ -38,7 +41,6 @@ const ResetPasswordComponent = () => {
       console.error('Failed to reset password');
     }
   }
-
     return (
         <div>
             <h1>Reset Password component</h1>

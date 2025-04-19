@@ -1,9 +1,9 @@
 import {
   Body,
-  Controller, Delete, Param, Patch,
-  Post,
+  Controller, Delete, Get, Param, Patch,
+  Post, UploadedFile, UseInterceptors,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { IUserData } from '../auth/models/interfaces/user-data.interface';
 import { TripStopsService } from './services/trip-stops.service';
@@ -12,6 +12,8 @@ import { TripStopReqDto } from './models/dto/req/trip-stop.req';
 import { TripID, TripStopID } from '../../common/types/entity-ids.type';
 import { TripStopMapper } from './services/trip-stop.mapper';
 import { TripStopUpdateReqDto } from './models/dto/req/trip-stop.update.req.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiFile } from '../../common/decorators/api-file.decorator';
 
 @ApiTags('trip-stop')
 @Controller('trip-stop')
@@ -49,5 +51,38 @@ export class TripStopsController {
     @Param('tripStopId') tripStopId: TripStopID,
   ): Promise<void> {
     await this.tripStopsService.deleteStop(userData, tripStopId);
+  }
+
+  @ApiBearerAuth()
+  @Get(':tripStopId')
+  public async getStopById(
+    @CurrentUser() userData: IUserData,
+    @Param('tripStopId') tripStopId: TripStopID,
+  ): Promise<TripStopResDto> {
+    const result = await this.tripStopsService.getTripStopById(userData, tripStopId);
+    return TripStopMapper.toResDto(result);
+  }
+
+  @ApiBearerAuth()
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('image'))
+  @ApiFile('image', false, true)
+  @Post(':tripStopId/image')
+  public async uploadImage(
+    @CurrentUser() userData: IUserData,
+    @UploadedFile() file: Express.Multer.File,
+    @Param('tripStopId') tripStopId: TripStopID,
+  ): Promise<TripStopResDto> {
+    const result = await this.tripStopsService.uploadImage(userData, file, tripStopId);
+    return TripStopMapper.toResDto(result);
+  }
+
+  @ApiBearerAuth()
+  @Delete(':tripStopId/image')
+  public async deleteImage(
+    @CurrentUser() userData: IUserData,
+    @Param('tripStopId') tripStopId: TripStopID,
+  ): Promise<void> {
+    await this.tripStopsService.deleteImage(userData, tripStopId);
   }
 }

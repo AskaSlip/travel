@@ -45,18 +45,6 @@ async function bootstrap() {
       docExpansion: 'list',
       defaultModelsExpandDepth: 7,
       persistAuthorization: true,
-      //TODO: add OAuth2
-      // initOAuth: {
-      //   clientId: "your-client-id",
-      //   clientSecret: "your-client-secret-if-required",
-      //   realm: "your-realms",
-      //   appName: "your-app-name",
-      //   scopeSeparator: " ",
-      //   scopes: "openid profile",
-      //   additionalQueryStringParams: {test: "hello"},
-      //   useBasicAuthenticationWithAccessCodeGrant: true,
-      //   usePkceWithAuthorizationCodeGrant: true
-      // }
     },
   });
 

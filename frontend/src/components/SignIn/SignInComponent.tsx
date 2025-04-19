@@ -1,7 +1,6 @@
 "use client"
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { authService } from '@/services/api.services';
-import { ISignIn } from '@/models/ISignIn';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { SignInFormData, signInSchema } from '@/validator/validation';
@@ -13,6 +12,7 @@ const SignInComponent = () => {
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isButtonDisabled, setIsButtonDisabled] = useState<boolean>(false);
+  const [attemps, setAttemps] = useState<number>(5);
 
   const {
     handleSubmit,
@@ -28,12 +28,12 @@ const SignInComponent = () => {
     setValue("email", "test@test.com");
     setValue("password", "123qwe!@#QWE");
   }, [setValue])
-//todo add error handling
   const onSubmitFormHandler: SubmitHandler<SignInFormData> = async (data) => {
     try {
       const result = await authService.signIn(data);
       setIsSuccess(true);
       setErrorMessage(null);
+      setAttemps(result.attemps);
       console.log("Success:", result);
 
       setTimeout(() => {router.push('/')}, 2000);
@@ -45,14 +45,17 @@ const SignInComponent = () => {
       if (error.message == 403) {
         // Handle too many failed attempts error
         console.log(403);
+        setAttemps(5);
         setIsButtonDisabled(true);
         setErrorMessage('Too many failed attempts. Please try again later.');
       } else if (error.message == 401) {
         // Handle incorrect password/email
         console.log(401);
+        setAttemps(attemps - 1);
+        console.log(attemps);
         setError("root", {
           type: "manual",
-          message: "Password is incorrect",
+          message: `Password is incorrect. You have ${attemps} attempts left.`,
         });
       }
       else if(error.message == 409){

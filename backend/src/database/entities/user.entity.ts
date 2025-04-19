@@ -4,6 +4,7 @@ import {CreateUpdateModel} from "./models/create-update.model";
 import {RefreshTokenEntity} from "./refresh-token.entity";
 import {UserID} from "../../common/types/entity-ids.type";
 import { TripEntity } from './trip.entity';
+import { PermissionEnum } from '../../modules/roles/enums/permission.enum';
 
 @Entity('users')
 
@@ -31,6 +32,9 @@ export class UserEntity extends CreateUpdateModel {
 
     @Column('text', {nullable: true})
     avatar: string;
+
+    @Column('json', { default: [] })
+    permissions: PermissionEnum[];
 
     @OneToMany(() => RefreshTokenEntity, (entity) => entity.user)
     refreshTokens: RefreshTokenEntity[];

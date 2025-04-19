@@ -1,27 +1,63 @@
 import { AdvancedMarker, Pin, useMap } from '@vis.gl/react-google-maps';
-import { IPoi } from '@/models/IPoi';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import {MarkerClusterer} from '@googlemaps/markerclusterer';
 import type {Marker} from '@googlemaps/markerclusterer';
+import { ITripStop } from '@/models/ITripStop';
+import PinModal from '@/components/Maps/PinModal';
+import { TripStopUpdateFormData } from '@/validator/validation';
+
+// const getLocality = (latLng: google.maps.LatLngLiteral) => {
+//   const geocoder = new window.google.maps.Geocoder();
+//   return new Promise<string>((resolve, reject) => {
+//     geocoder.geocode({ location: latLng }, (results, status) => {
+//       if (status === google.maps.GeocoderStatus.OK && results) {
+//         const localityResult = results.find(result =>
+//           result.types.includes('locality')
+//         );
+//         const locality = localityResult ? localityResult.address_components[0].long_name : 'unknown';
+//         resolve(locality);
+//       } else {
+//         reject('no info about locality');
+//       }
+//     });
+//   });
+// };
+
+const textAreas = {
+  title: 'Modify your trip stop',
+  description: 'Change or delete your stop',
+  saveBtn: 'Update',
+  deleteBtn: 'Delete',
+};
 
 interface IProps {
-  pois: IPoi[];
+  pois: ITripStop[];
+  handleUpdateAction: (data: TripStopUpdateFormData) => void;
+  handleDeleteAction: (id: string) => void;
+  selectedMarker: ITripStop | null;
+  setSelectedMarker: (marker: ITripStop | null) => void;
+  isModalOpen: boolean;
+  setIsModalOpen: (value: boolean) => void;
+
 }
 
-const PoiMarkers: FC <IProps> = ({pois}) => {
+const PoiMarkers: FC <IProps> = ({pois, handleUpdateAction, handleDeleteAction, selectedMarker, setSelectedMarker, isModalOpen, setIsModalOpen}) => {
 
   const map = useMap();
-  //маркери це ті, які знаходяться в масиві
   const [markers, setMarkers] = useState<{[key: string]: Marker}>({});
   const clusterer = useRef<MarkerClusterer | null>(null);
 
-  const handleClick = useCallback((ev: google.maps.MapMouseEvent) => {
-    if(!map) return;
-    if(!ev.latLng) return;
-    console.log('marker clicked:', ev.latLng.toString());
-    map.panTo(ev.latLng);
-  }, []);
 
+  const handleMarkerClick = useCallback((poi: ITripStop) => (ev: google.maps.MapMouseEvent) => {
+    if (!map || !ev.latLng) return;
+
+    console.log('Clicked marker ID:', poi.id);
+    console.log('Coordinates:', ev.latLng.lat(), ev.latLng.lng());
+
+    setSelectedMarker(poi);
+    setIsModalOpen(true);
+    map.panTo(ev.latLng);
+  }, [map, setSelectedMarker, setIsModalOpen]);
 
   useEffect(() => {
     if (!map) return;
@@ -29,7 +65,6 @@ const PoiMarkers: FC <IProps> = ({pois}) => {
       clusterer.current = new MarkerClusterer({map});
     }
   }, [map]);
-
 
   useEffect(() => {
     clusterer.current?.clearMarkers();
@@ -52,20 +87,58 @@ const PoiMarkers: FC <IProps> = ({pois}) => {
     });
   };
 
+//todo досі не вирішили чи треба мені локаліті, але скоріше за все, шо ні
+  // useEffect(() => {
+  //   const fetchLocalities = async () => {
+  //     const poisWithLocality = await Promise.all(
+  //       pois.map(async (poi) => {
+  //         try {
+  //           const locality = await getLocality(poi.location);
+  //           return { ...poi, locality };
+  //         } catch (error) {
+  //           console.error("Error fetching locality:", error);
+  //           return { ...poi, locality: 'unknown' };
+  //         }
+  //       })
+  //     );
+  //     setPoisWithLocality(poisWithLocality);
+  //   };
+  //
+  //   fetchLocalities();
+  // }, [pois]);
+
+//todo зробити якось відображення інфи про маркер (в ідеалі подивитись на infoWindow в @vis.gl/react-google-maps)
   return (
     <div>
-      {pois.map( (poi: IPoi) => (
+      {pois.map( (poi: ITripStop) => (
         <AdvancedMarker
           key={poi.key}
-          position={poi.location}
+          position={{lat: poi.lat, lng: poi.lng }}
           ref={marker => setMarkerRef(marker, poi.key)}
           clickable={true}
-          onClick={handleClick}
+          onClick={handleMarkerClick(poi)}
           >
-          <Pin background={'#7f3dd9'} glyphColor={'#000'} borderColor={'#000'} />
+          <Pin background={'rgba(127,61,217,0.14)'} glyphColor={'rgba(0,0,0,0)'} borderColor={'rgba(0,0,0,0)'} />
         </AdvancedMarker>
       ))}
 
+
+      {selectedMarker && (
+        <PinModal
+          onSaveAction={handleUpdateAction}
+          onDeleteAction={() => selectedMarker && handleDeleteAction(selectedMarker.id)}
+          open={isModalOpen}
+          onOpenChangeAction={setIsModalOpen}
+          textAreas={textAreas}
+          mode='edit'
+          initialData={{
+            key: selectedMarker.key,
+            notes: selectedMarker.notes ?? '',
+            image: selectedMarker.image ?? '',
+          }
+        }
+        />
+      )}
     </div>
   );
 }

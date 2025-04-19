@@ -1,13 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { TripID, TripStopID } from '../../../../../common/types/entity-ids.type';
-import { TripResDto } from '../../../../trips/models/dto/res/trip.res.dto';
 
 export class TripStopResDto {
   @ApiProperty({ type: String })
   id: TripStopID
-  location: string;
+  key: string;
   notes: string;
   lat: number;
   lng: number;
+  locality: string;
+  image?: string;
   trip_id: TripID;
 }

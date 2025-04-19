@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
-  IsInt, IsLatitude, IsLongitude,
-  IsNumber,
+  IsLatitude, IsLongitude,
   IsOptional,
   IsString,
   Length,
@@ -14,12 +13,13 @@ import { Transform } from 'class-transformer';
 export class TripStopReqDto {
   @ApiProperty({ example: 'Nice coffee shop' })
   @IsString()
-  @Length(5, 200)
-  location: string;
+  @Length(5, 100)
+  key: string;
 
   @ApiProperty({ example: 'some notes' })
   @IsString()
   @IsOptional()
+  @Length(0, 200)
   notes?: string;
 
   @ApiProperty({ example: '-33.85673152928874' })
@@ -31,4 +31,12 @@ export class TripStopReqDto {
   @IsLongitude()
   @Transform(TransformHelper.cleanSpaces)
   lng: number;
+
+  @IsString()
+  locality: string;
+
+  @ApiProperty({ example: 'some image url' })
+  @IsString()
+  @IsOptional()
+  image?: string;
 }

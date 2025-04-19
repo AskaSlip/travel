@@ -31,6 +31,10 @@ export default (): Config => ({
   aws: {
     accessKey: getEnv('AWS_S3_ACCESS_KEY'),
     secretKey: getEnv('AWS_S3_SECRET_KEY'),
+    bucketName: getEnv('AWS_S3_BUCKET_NAME'),
+    region: getEnv('AWS_S3_REGION'),
+    ACL: getEnv('AWS_S3_ACL'),
+    endpoint: getEnv('AWS_S3_ENDPOINT'),
   },
     sentry: {
         dsn: getEnv('SENTRY_DSN'),
