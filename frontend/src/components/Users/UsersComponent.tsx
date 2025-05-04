@@ -1,7 +1,7 @@
 'use client'
 import { FC, useEffect, useState } from 'react';
 import { IUser } from '@/models/IUser';
-import { getAllUsers } from '@/services/api.services';
+import { userService } from '@/services/api.services';
 import UserComponent from '@/components/User/UserComponent';
 
 interface IProps {
@@ -9,11 +9,11 @@ interface IProps {
 }
 
 const UsersComponent:FC = () => {
-
+//todo поки не треба
   const [allUsers, setAllUsers] = useState<IUser[]>([]);
 
   useEffect(() => {
-    getAllUsers().then( (user) => {
+    userService.getAllUsers().then( (user) => {
       setAllUsers(user);
     })
   }, []);

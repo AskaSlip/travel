@@ -3,7 +3,7 @@ import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import {MarkerClusterer} from '@googlemaps/markerclusterer';
 import type {Marker} from '@googlemaps/markerclusterer';
 import { ITripStop } from '@/models/ITripStop';
-import PinModal from '@/components/Maps/PinModal';
+import PinModal from '@/modals/PinModal';
 import { TripStopUpdateFormData } from '@/validator/validation';
 
 // const getLocality = (latLng: google.maps.LatLngLiteral) => {

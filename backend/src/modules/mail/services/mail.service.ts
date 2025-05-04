@@ -44,6 +44,20 @@ export class MailService {
 
   }
 
+  public async sendEmailAboutDeletedAccount(email: string, username: string){
+    const mailConfig = this.configService.get<MailConfig>('mail');
+    const user = await this.userRepository.findOneBy({ email });
+    if(!user){
+      throw new BadRequestException('User with this email does not exist');
+    }
+    await this.mailerService.sendMail({
+      to: mailConfig?.emailForCheck,
+      subject: "Account deleted",
+      template: "delete-user-info",
+      context: { username }
+    })
+  }
+
  private async sendEmail(email: string, subject: string, template: string){
    const mailConfig = this.configService.get<MailConfig>('mail');
    const jwtConfig = this.configService.get<JwtConfig>('jwt') as JwtConfig;

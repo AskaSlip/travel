@@ -3,6 +3,7 @@ import { TripResDto } from '../models/dto/res/trip.res.dto';
 import { ListTripsQueryDto } from '../models/dto/req/list-trips-query.dto';
 import { ListTripsResDto } from '../models/dto/res/list-trips.res.dto';
 import { TripStopMapper } from '../../trip-stop/services/trip-stop.mapper';
+import { TicketsMapper } from '../../tickets/services/tickets.mapper';
 
 export class TripMapper {
     public static toResDto(trip: Omit<TripEntity, 'created' | 'updated'>): TripResDto {
@@ -16,6 +17,7 @@ export class TripMapper {
               ? trip.tripStops.map((stop) => TripStopMapper.toResDto(stop))
               : [],
             user_id: trip.user_id,
+            tickets: trip.tickets ? trip.tickets.map((ticket) => TicketsMapper.toResDto(ticket)) : [],
         }
     }
 

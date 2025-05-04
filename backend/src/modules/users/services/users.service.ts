@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 
 import { UpdateUserReqDto } from '../models/dto/req/update-user.req.dto';
 import { UserRepository } from '../../repository/services/user.repository';
@@ -10,6 +10,8 @@ import { ContentType } from '../../file-storage/enums/content-type.enum';
 import { ConfigService } from '@nestjs/config';
 import { AwsConfig, Config } from '../../../configs/config-type';
 import { keyFromUrl } from '../../../common/helpers/upload-file.helper';
+import { AuthService } from '../../auth/services/auth.service';
+import { MailService } from '../../mail/services/mail.service';
 
 
 @Injectable()
@@ -18,23 +20,31 @@ export class UsersService {
     private readonly userRepository: UserRepository,
     private readonly fileStorageService: FileStorageService,
     private readonly configService: ConfigService<Config>,
+    private readonly authService: AuthService,
+    private readonly mailService: MailService,
   ) {
   }
 
   public async findMe(userData: IUserData): Promise<UserEntity> {
-    const user = await this.userRepository.findOneBy({ id: userData.userId });
-    if (!user) {
-      throw new Error('User not found');
-    }
-    return user;
+    return this.isUserExist(userData.userId);
   }
 
-  public async updateMe(userData:IUserData, dto: UpdateUserReqDto) {
-    return ` This action updates a user${userData.userId}`;
+  public async updateMe(userData: IUserData, dto: UpdateUserReqDto): Promise<UserEntity> {
+    const user = await this.isUserExist(userData.userId);
+    const updatedUser = {
+      ...user,
+      ...dto,
+    };
+    return await this.userRepository.save(updatedUser);
+
   }
 
-  public async removeMe(id: UserID) {
-    return `This action returns a #${id} user`;
+  public async removeMe(userData: IUserData): Promise<void> {
+    const user = await this.isUserExist(userData.userId);
+    await this.mailService.sendEmailAboutDeletedAccount(userData.email, user.username);
+    await this.authService.signOut(userData);
+    await this.userRepository.delete({ id: userData.userId });
+
   }
 
   public async uploadAvatar(userData: IUserData, file: Express.Multer.File): Promise<UserEntity> {
@@ -47,16 +57,16 @@ export class UsersService {
       file,
       ContentType.IMAGE,
       userData.userId,
-      )
-    if(user.avatar){
-      const key = keyFromUrl(user.avatar, awsConfig)
+    );
+    if (user.avatar) {
+      const key = keyFromUrl(user.avatar, awsConfig);
       await this.fileStorageService.deleteFile(key);
     }
     const avatarUrl = `${awsConfig.endpoint}/${awsConfig.bucketName}/${pathToFile}`;
     return await this.userRepository.save({
       ...user,
       avatar: avatarUrl,
-    })
+    });
   }
 
   public async deleteAvatar(userData: IUserData): Promise<void> {
@@ -66,7 +76,7 @@ export class UsersService {
       throw new Error('User not found');
     }
 
-    const key = keyFromUrl(user.avatar, awsConfig)
+    const key = keyFromUrl(user.avatar, awsConfig);
     console.log(key);
 
     if (user.avatar) {
@@ -86,5 +96,12 @@ export class UsersService {
   }
 
 
+  private async isUserExist(userId: UserID) {
+    const user = await this.userRepository.findOneBy({ id: userId });
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+    return user;
+  }
 
 }

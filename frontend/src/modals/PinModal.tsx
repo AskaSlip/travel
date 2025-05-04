@@ -1,7 +1,7 @@
 "use client";
 
 import * as Dialog from '@radix-ui/react-dialog';
-import { useEffect} from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styles from './PinModal.module.css';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -31,24 +31,52 @@ interface IProps {
 
 export default function PinModal({ initialData, onSaveAction, onDeleteAction, open, onOpenChangeAction, textAreas, mode }: IProps) {
 
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (initialData && typeof initialData.image === 'string') {
+      setPreviewImage(initialData.image);
+    }
+  }, [initialData]);
+
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors },
     watch,
+    setValue,
   } = useForm<TripStopCreateFormData | TripStopUpdateFormData>({
     resolver: zodResolver(mode === 'create' ? tripStopCreateSchema : tripStopUpdateSchema),
     defaultValues: initialData,
   })
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setValue("image", file);
+      setPreviewImage(URL.createObjectURL(file));
+    }
+  };
 
   const watchedFields = watch();
 
   useEffect(() => {
     if (initialData) {
       reset(initialData);
+      if (typeof initialData.image === 'string') {
+        setPreviewImage(initialData.image);
+      }
+    } else if (mode === 'create') {
+      reset();
+      setPreviewImage(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
-  }, [initialData, reset]);
+  }, [initialData, mode, reset]);
 
   const handleFormSubmit = (data: TripStopCreateFormData | TripStopUpdateFormData) => {
     onSaveAction(data);
@@ -81,8 +109,21 @@ export default function PinModal({ initialData, onSaveAction, onDeleteAction, op
             </label>
             <label>
               Image:
-              <input {...register('image')} />
-              {errors.image && <span>{errors.image.message}</span>}
+
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+              />
+              {errors?.image?.message && <span>{String(errors.image.message)}</span>}
+
+              {previewImage && (
+                <div>
+                  <p>Preview:</p>
+                  <img src={previewImage} alt="Preview" style={{ maxWidth: '300px', marginTop: '10px' }} />
+                </div>
+              )}
+
             </label>
           <div className={styles.modalButtons}>
             <button type={'submit'}  disabled={!isFormChanged}>

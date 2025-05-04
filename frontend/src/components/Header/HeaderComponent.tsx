@@ -2,27 +2,31 @@
 import Link from 'next/link';
 import styles from  './Header.module.css';
 import AuthComponent from '@/components/Auth/AuthComponent';
+import { useEffect, useState } from 'react';
+import { useAppDispatch, useAppSelector } from '@/redux/store';
+import { userActions } from '@/redux/slices/userSlice';
 
 const HeaderComponent = () => {
 
-  //todo пофіксити баг з рендерингом кнопок, якщо зайшов через гугл
+  let { user, isAuthorized} = useAppSelector(state => state.userSlice)
+  let dispatch = useAppDispatch()
+
+  useEffect(() => {
+    dispatch(userActions.loadUser())
+  }, []);
+
   return(
     <div className={styles.wrap}>
       <div>
-        <p>left</p>
-        <Link href={'/test'}>test</Link>
-        <br/>
-        <Link href={'/'}>home</Link>
-        <br/>
-        <Link href={'/change-password'}>change password</Link>
-        <br/>
-        <Link href={'/create-trip'}>create trip</Link>
-        <br/>
-        <Link href={'/trips'}>my trips</Link>
-
+        <h1>Travel Planner</h1>
       </div>
-      <div>
-        <p>right</p>
+      <div className={styles.info}>
+        <span>change style</span>
+        <Link href={'/my-cabinet'}>
+          {isAuthorized ? (
+            <img src={user?.avatar || './default-avatar.jpg'} className={styles.img} alt={"avatar"}/>
+          ) : null}
+        </Link>
         <AuthComponent/>
       </div>
 

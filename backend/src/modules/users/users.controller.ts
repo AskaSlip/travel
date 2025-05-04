@@ -36,14 +36,17 @@ export class UsersController {
   @Patch('me')
   public async updateMe(
     @CurrentUser() userData: IUserData,
-    @Body() dto: UpdateUserReqDto) {
-    return await this.usersService.updateMe(userData, dto);
+    @Body() dto: UpdateUserReqDto): Promise<UserBaseResDto> {
+    const result = await this.usersService.updateMe(userData, dto);
+    return UserMapper.toResDto(result);
   }
 
   @ApiBearerAuth()
   @Delete('me')
-  public async removeMe(@Param('userId') userId: UserID) {
-    return await this.usersService.removeMe(userId);
+  public async removeMe(
+    @CurrentUser() userData: IUserData,
+  ): Promise<void> {
+    await this.usersService.removeMe(userData);
   }
 
   @ApiBearerAuth()

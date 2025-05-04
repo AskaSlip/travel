@@ -7,7 +7,7 @@ import {
 import { FC, useEffect, useState } from 'react';
 import { IUserMarker } from '@/models/IUserMarker';
 import SearchBox from '@/components/Maps/SearchBox';
-import PinModal from '@/components/Maps/PinModal';
+import PinModal from '@/modals/PinModal';
 import { tripStopService } from '@/services/api.services';
 import { ITripStop } from '@/models/ITripStop';
 import styles from './MapComponent.module.css';
@@ -35,19 +35,10 @@ const MapComponent: FC<IProps> = ({ tripId, children, tripStops, setTripStops })
   const [selectedMarker, setSelectedMarker] = useState<IUserMarker | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
-
-  // useEffect(() => {
-  //   if (trip?.tripStops?.length) {
-  //     const stops = trip.tripStops.map((stop) => ({
-  //       ...stop,
-  //       key: stop.key,
-  //       lat: Number(stop.lat),
-  //       lng: Number(stop.lng),
-  //
-  //     }));
-  //     setPois(stops || []);
-  //   }
-  // }, [trip, trip.tripStops]);
+  //check for file
+  const isFile = (value: unknown): value is File => {
+    return typeof File !== 'undefined' && value instanceof File;
+  };
 
   useEffect(() => {
     setIsClient(true);
@@ -98,41 +89,51 @@ const MapComponent: FC<IProps> = ({ tripId, children, tripStops, setTripStops })
     setIsModalOpen(true);
   };
 
-  const handleSave = (data:
+  const handleSave = async (data:
                         | { key: string; image?: string | null; notes?: string | null }
                         | { image?: string | null; key?: string; notes?: string | null }
-  ) => {
-    if (!selectedMarker || !data.key) return;
+  ) => { if (!selectedMarker || !data.key) return;
 
-    void tripStopService.createTripStop(tripId, {
+try{
+    const newStop = await tripStopService.createTripStop(tripId, {
       key: data.key,
       notes: data.notes ?? '',
-      image: data.image ?? '',
+      image: '',
       lat: selectedMarker.lat,
       lng: selectedMarker.lng,
       locality: selectedMarker.locality,
-    }).then((newStop) => {
-      setUserMarker((current) =>
-        current.filter(
-          (m) => m.lat !== selectedMarker.lat || m.lng !== selectedMarker.lng,
-        )
-      );
+    })
+
+
+  if (isFile(data.image)) {
+    const updatedStop = await tripStopService.uploadImage(data.image, newStop.id);
+    newStop.image = updatedStop.image;
+  }
 
       const newPoi: ITripStop = {
         id: newStop.id,
         key: newStop.key,
         lat: Number(newStop.lat),
         lng: Number(newStop.lng),
+        image: newStop.image,
       };
+
+  setUserMarker((current) =>
+    current.filter(
+      (m) => m.lat !== selectedMarker.lat || m.lng !== selectedMarker.lng,
+    )
+  );
+
       if (setTripStops) {
         setTripStops((prev) => [...(prev || []), newPoi]);
       }
+
       setSelectedMarker(null);
       setIsModalOpen(false);
-      console.log('Збережено:', data);
-    }).catch ((error) => {
-      console.error('Error while saving', error);
-    })
+      console.log('Saved:', data);
+    }catch (error) {
+  console.error('Error while saving', error);
+}
   };
 
   const handleMarkerDelete = () => {
@@ -147,7 +148,7 @@ const MapComponent: FC<IProps> = ({ tripId, children, tripStops, setTripStops })
 
   const center = tripStops?.[0]
     ? { lat: tripStops[0].lat, lng: tripStops[0].lng }
-    : { lat: 0, lng: 0 };
+    : { lat: 49.839683, lng: 24.029717 };
 
   if (!isClient) {
     return null;

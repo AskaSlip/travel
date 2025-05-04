@@ -1,7 +1,7 @@
 import { ITripStop } from '@/models/ITripStop';
 import { FC, useState } from 'react';
 import { TripStopUpdateFormData } from '@/validator/validation';
-import PinModal from '@/components/Maps/PinModal';
+import PinModal from '@/modals/PinModal';
 import { useMap } from '@vis.gl/react-google-maps';
 
 interface IProps {

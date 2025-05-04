@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { TripID, UserID } from '../../../../../common/types/entity-ids.type';
 import { TripStopResDto } from '../../../../trip-stop/models/dto/res/trip-stop.res.dto';
+import { TicketResDto } from '../../../../tickets/models/dto/res/ticket.res.dto';
 
 export class TripResDto {
   @ApiProperty({ type: String })
@@ -10,6 +11,7 @@ export class TripResDto {
   date_of_trip: string;
   trip_picture: string;
   tripStops?: TripStopResDto[]
+  tickets?: TicketResDto[]
 
   @ApiProperty({ type: String })
   user_id: UserID;

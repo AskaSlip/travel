@@ -47,23 +47,26 @@ export const createTripSchema = z.object({
     .transform(value => (value ? new Date(value) : null))
     .refine(date => !date || date >= today, { message: "Date cannot be in the past" }),
   trip_picture: z
-    .string()
-    .trim()
+    .any()
     .optional()
-    .transform(value => (value === "" ? null : value))
-    .refine(value => !value || /^https?:\/\/\S+\.\S+$/.test(value), { message: "Invalid URL" }),
+    .refine((file) => file instanceof File || file === undefined, {
+      message: "Invalid file format",
+    }),
 });
 
 export const tripStopCreateSchema = z.object({
   key: z.string().min(5, { message: 'Must be 5 or more characters long' }).max(100),
   notes: z.string().trim().nullable().optional()
     .transform(value => (value === '' ? null : value)),
-  image: z.string().trim().nullable().optional()
-    .transform(value => (value === '' ? null : value))
-    .refine(value => !value || /^https?:\/\/\S+\.\S+$/.test(value), { message: 'Invalid URL' }),
+  image: z
+    .any()
+    .optional()
+    .refine((file) => file instanceof File || file === undefined, {
+      message: "Invalid file format",
+    }),
 });
 
-export const tripStopUpdateSchema = tripStopCreateSchema.partial(); // всі поля опціональні
+export const tripStopUpdateSchema = tripStopCreateSchema.partial();
 
 
 

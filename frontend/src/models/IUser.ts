@@ -9,3 +9,4 @@ export interface IUser {
   isVerify: boolean;
   avatar?: string;
 }
+export type IUserUpdate = Omit<IUser, 'id' | 'role' | 'isVerify' | 'avatar'>;

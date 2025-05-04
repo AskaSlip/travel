@@ -2,9 +2,9 @@
 import { ITrip } from '@/models/ITrip';
 import { FC, useEffect, useState } from 'react';
 import { tripService } from '@/services/api.services';
-import TripComponent from '@/components/Trip/TripComponent';
 import styles from './TripsComponent.module.css';
 import Link from 'next/link';
+import SimpleTripComponent from '@/components/Trip/SimpleTripComponent';
 
 
 const TripsComponent = () => {
@@ -31,11 +31,18 @@ const TripsComponent = () => {
         trip.map((trip: ITrip) => (
             <div key={trip.id}  className={styles.boxWrap}>
               <Link href={`/trips/${trip.id}`}>
-                <TripComponent trip={trip}/>
+                <SimpleTripComponent trip={trip}/>
               </Link>
             </div>
           ))
-      ): <h1>no trips</h1>}
+      ): (
+        <div>
+          <h1>You don't have any trip, so let's create one</h1>
+          <Link href="/create-trip">
+            <button>Create Your First Trip</button>
+          </Link>
+        </div>
+      )}
     </div>
   )
 }

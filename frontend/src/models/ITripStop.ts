@@ -3,7 +3,7 @@ export interface ITripStop {
   key: string;
   notes?: string | '';
   locality?: string;
-  image?: string | '';
+  image?: string | '' | File;
   lat: number;
   lng: number;
 }
@@ -11,5 +11,5 @@ export interface ITripStop {
 export interface ITripStopUpdate{
   key: string,
   notes: string;
-  image: string;
+  image: string | File;
 }

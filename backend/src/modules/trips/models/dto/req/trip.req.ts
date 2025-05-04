@@ -3,7 +3,7 @@ import { Transform } from 'class-transformer';
 import {
   IsDateString,
   IsOptional,
-  IsString,
+  IsString, IsUrl,
   Length,
 
 } from 'class-validator';
@@ -17,6 +17,7 @@ export class TripReqDto {
   @Length(5, 100)
   trip_name: string;
 
+  @ApiProperty({ example: 'some notes' })
   @IsString()
   @IsOptional()
   description?: string;

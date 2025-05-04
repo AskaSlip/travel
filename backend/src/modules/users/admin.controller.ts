@@ -36,4 +36,6 @@ export class AdminController {
     const [entities, total] = await this.adminService.getAllUsers(query);
     return UserMapper.toResDtoList(entities, total, query);
   }
+
+
 }

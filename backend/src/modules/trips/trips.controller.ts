@@ -18,6 +18,10 @@ import { ApiFile } from '../../common/decorators/api-file.decorator';
 import { ListTripStopsQueryDto } from '../trip-stop/models/dto/req/list-trip-stops-query.dto';
 import { ListTripStopsResDto } from '../trip-stop/models/dto/res/list-trip-stops.res.dto';
 import { TripStopMapper } from '../trip-stop/services/trip-stop.mapper';
+import { TripUpdateReq } from './models/dto/req/trip-update.req';
+import { ListTicketsQueryDto } from '../tickets/models/dto/req/list-tickets-query.dto';
+import { ListTicketsResDto } from '../tickets/models/dto/res/list-tickets.res.dto';
+import { TicketsMapper } from '../tickets/services/tickets.mapper';
 //todo update here with role
 @ApiTags('trips')
 @Controller('trips')
@@ -32,7 +36,7 @@ export class TripsController {
     @Body() dto: TripReqDto,
   ): Promise<TripResDto> {
     const result = await this.tripsService.createTrip(userData, dto);
-    return TripMapper.toResDto({ ...result, tripStops: [] });
+    return TripMapper.toResDto({ ...result, tripStops: [], tickets: [] });
   }
 
   //trips by user
@@ -95,7 +99,7 @@ export class TripsController {
   public async updateTripById(
     @CurrentUser() userData: IUserData,
     @Param('tripId') tripId: TripID,
-    @Body() dto: TripReqDto
+    @Body() dto: TripUpdateReq
   ) {
     const result = await this.tripsService.updateTripById(userData, tripId, dto);
     return TripMapper.toResDto(result);
@@ -143,6 +147,17 @@ export class TripsController {
 ): Promise<ListTripStopsResDto> {
     const [entities, total] = await this.tripsService.getTripStops(userData, tripId, query);
     return TripStopMapper.toResDtoList(entities, total, query);
+  }
+
+  @ApiBearerAuth()
+  @Get(':tripId/tickets')
+  public async getTripTickets(
+    @CurrentUser() userData: IUserData,
+    @Param('tripId') tripId: TripID,
+    @Query() query: ListTicketsQueryDto
+  ): Promise<ListTicketsResDto> {
+    const [entities, total] = await this.tripsService.getTripTickets(userData, tripId, query);
+    return TicketsMapper.toResDtoList(entities, total, query);
   }
 
 

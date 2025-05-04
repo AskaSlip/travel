@@ -3,20 +3,114 @@ import { ISignIn } from '@/models/ISignIn';
 import { LocalStorageTokensUpdate } from '@/helpers/localStorageTokensUpdate';
 import { IEmail } from '@/models/IEmail';
 import { IResetPassword } from '@/models/IResetPassword';
-import { ITrip } from '@/models/ITrip';
+import { ITrip, ITripUpdate } from '@/models/ITrip';
 import { IChangePassword } from '@/models/IChangePassword';
 import { ITripStop, ITripStopUpdate } from '@/models/ITripStop';
+import { IUser, IUserUpdate } from '@/models/IUser';
+import { ITicket } from '@/models/ITicket';
 
 
-export const getAllUsers = async (): Promise<any> => {
-  const response = await fetch('http://localhost:5000/admin/users', {
-    method: 'GET',
-    headers: {
-      accept: 'application/json',
-    },
-  });
-  const data = await response.json();
-  return data.data;
+const userService = {
+  getAllUsers: async (): Promise<any> => {
+    const accessToken = localStorage.getItem('accessToken');
+
+    const response = await fetch('http://localhost:5000/admin/users', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: accessToken ? `Bearer ${accessToken}` : '',
+      },
+    });
+    const data = await response.json();
+    return data.data;
+  },
+
+  getCurrentUser: async (): Promise<IUser> => {
+    const accessToken = localStorage.getItem('accessToken');
+
+    const response = await fetch('http://localhost:5000/users/me', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: accessToken ? `Bearer ${accessToken}` : '',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch current user');
+    }
+
+    return await response.json();
+  },
+
+  updateCurrentUser: async (data: IUserUpdate): Promise<IUser> => {
+    const accessToken = localStorage.getItem('accessToken');
+
+
+    const response = await fetch('http://localhost:5000/users/me', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: accessToken ? `Bearer ${accessToken}` : '',
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update user');
+    }
+
+    return await response.json();
+  },
+
+  deleteCurrentUser: async (): Promise<void> => {
+    const accessToken = localStorage.getItem('accessToken');
+
+    const response = await fetch('http://localhost:5000/users/me', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: accessToken ? `Bearer ${accessToken}` : '',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to delete user');
+    }
+  },
+
+  uploadAvatar: async (file: File, userId: string): Promise<void> => {
+    const accessToken = localStorage.getItem('accessToken');
+
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    const response = await fetch('http://localhost:5000/users/me/avatar', {
+      method: 'POST',
+      headers: {
+        Authorization: accessToken ? `Bearer ${accessToken}` : '',
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to upload avatar');
+    }
+  },
+  deleteAvatar: async (): Promise<void> => {
+    const accessToken = localStorage.getItem('accessToken');
+
+    const response = await fetch('http://localhost:5000/users/me/avatar', {
+      method: 'DELETE',
+      headers: {
+        Authorization: accessToken ? `Bearer ${accessToken}` : '',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to delete avatar');
+    }
+  },
 
 };
 
@@ -52,7 +146,7 @@ const authService = {
       if (!response.ok) {
         const errorData = await response.json();
         const errorCode = errorData.statusCode;
-        console.log(errorCode, "API");
+        console.log(errorCode, 'API');
         throw new Error(errorCode);
       }
 
@@ -60,7 +154,7 @@ const authService = {
 
       // localStorage.setItem("token_exp", String(Date.now() + 30 * 24 * 60 * 60 * 1000));
       LocalStorageTokensUpdate.updateTokens(result.tokens);
-      window.dispatchEvent(new Event("authChanged"))
+      window.dispatchEvent(new Event('authChanged'));
       return result;
     } catch (error) {
       console.error('Error:', error);
@@ -86,7 +180,7 @@ const authService = {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('token_exp');
-      window.dispatchEvent(new Event("authChanged"))
+      window.dispatchEvent(new Event('authChanged'));
 
     } catch (error) {
       console.error('Error:', error);
@@ -116,8 +210,8 @@ const authService = {
       const result = await response.json();
 
       LocalStorageTokensUpdate.updateTokens(result);
-      localStorage.setItem("token_exp", String(Date.now() + 30 * 24 * 60 * 60 * 1000));
-      window.dispatchEvent(new Event("authChanged"))
+      localStorage.setItem('token_exp', String(Date.now() + 30 * 24 * 60 * 60 * 1000));
+      window.dispatchEvent(new Event('authChanged'));
 
       return result;
     } catch (error) {
@@ -131,20 +225,20 @@ const authService = {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-        }
+        },
       });
 
       if (!response.ok) {
         const errorData = await response.json();
         if (response.status === 410) {
-          throw new Error("expired");
+          throw new Error('expired');
         }
-        throw new Error(errorData.message || "Failed to verify email");
+        throw new Error(errorData.message || 'Failed to verify email');
       }
 
       const result = await response.json();
       LocalStorageTokensUpdate.updateTokens(result.tokens);
-      window.dispatchEvent(new Event("authChanged"))
+      window.dispatchEvent(new Event('authChanged'));
     } catch (error) {
       console.error('Error:', error);
       throw error;
@@ -185,7 +279,7 @@ const passwordService = {
       if (!response.ok) {
         const errorData = await response.json();
         const errorCode = errorData.statusCode;
-        console.log(errorCode, "API");
+        console.log(errorCode, 'API');
         throw new Error(errorCode);
       }
 
@@ -209,7 +303,7 @@ const passwordService = {
       if (!response.ok) {
         const errorData = await response.json();
         const errorCode = errorData.statusCode;
-        console.log(errorCode, "API");
+        console.log(errorCode, 'API');
         throw new Error(errorCode);
       }
 
@@ -229,12 +323,12 @@ const passwordService = {
           Authorization: accessToken ? `Bearer ${accessToken}` : '',
         },
         body: JSON.stringify(data),
-      })
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
         const errorCode = errorData.statusCode;
-        console.log(errorCode, "API");
+        console.log(errorCode, 'API');
         throw new Error(errorCode);
 
       }
@@ -243,28 +337,51 @@ const passwordService = {
       console.error('Error:', error);
       throw error;
     }
-  }
+  },
 };
 
 const tripService = {
-  createTrip: async (data: ITrip): Promise<void> => {
+  createTrip: async (data: ITrip) => {
+
+    const accessToken = localStorage.getItem('accessToken');
+    const response = await fetch('http://localhost:5000/trips/create-trip', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: accessToken ? `Bearer ${accessToken}` : '',
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw errorData;
+    }
+    return response.json();
+
+  },
+
+  updateTrip: async (tripId: string, data: ITripUpdate): Promise<ITrip> => {
+    const accessToken = localStorage.getItem('accessToken');
+
     try {
-      const accessToken = localStorage.getItem('accessToken');
-      const response = await fetch('http://localhost:5000/trips/create-trip', {
-        method: 'POST',
+      const response = await fetch(`http://localhost:5000/trips/${tripId}`, {
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           Authorization: accessToken ? `Bearer ${accessToken}` : '',
         },
         body: JSON.stringify(data),
-      })
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
         const errorCode = errorData.statusCode;
-        console.log(errorCode, "API");
+        console.log(errorCode, 'API');
         throw new Error(errorCode);
       }
+
+      return await response.json();
     } catch (error) {
       throw error;
     }
@@ -279,7 +396,7 @@ const tripService = {
         headers: {
           'Content-Type': 'application/json',
           Authorization: accessToken ? `Bearer ${accessToken}` : '',
-        }
+        },
       });
       const data = await responce.json();
       return data.data;
@@ -289,7 +406,6 @@ const tripService = {
 
   },
 
-  //todo trip by id (done, but need to make it here)
   getTripById: async (id: string): Promise<ITrip> => {
     const accessToken = localStorage.getItem('accessToken');
 
@@ -299,7 +415,7 @@ const tripService = {
         headers: {
           'Content-Type': 'application/json',
           Authorization: accessToken ? `Bearer ${accessToken}` : '',
-        }
+        },
       });
       const data = await response.json();
       return data;
@@ -317,95 +433,213 @@ const tripService = {
         headers: {
           'Content-Type': 'application/json',
           Authorization: accessToken ? `Bearer ${accessToken}` : '',
-        }
+        },
       });
       const data = await response.json();
       return data.data;
     } catch (error) {
       throw new Error('Failed to get trip stops');
     }
-  }
+  },
+
+  // todo delete trip
+
+  uploadImage: async (file: File, tripId: string): Promise<void> => {
+    const accessToken = localStorage.getItem('accessToken');
+
+    const formData = new FormData();
+    formData.append('trip_picture', file);
+
+    try {
+      const response = await fetch(`http://localhost:5000/trips/${tripId}/image`, {
+        method: 'POST',
+        headers: {
+          Authorization: accessToken ? `Bearer ${accessToken}` : '',
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        const errorCode = errorData.statusCode;
+        console.log(errorCode, 'API');
+        throw new Error(errorCode);
+      }
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  deleteImage: async (tripId: string): Promise<void> => {
+    const accessToken = localStorage.getItem('accessToken');
+
+    try {
+      const response = await fetch(`http://localhost:5000/trips/${tripId}/image`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: accessToken ? `Bearer ${accessToken}` : '',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        const errorCode = errorData.statusCode;
+        console.log(errorCode, 'API');
+        throw new Error(errorCode);
+      }
+    } catch (error) {
+      throw error;
+    }
+  },
+
+};
+
+const tripStopService = {
+  createTripStop: async (tripId: string, data: ITripStop): Promise<ITripStop> => {
+    const accessToken = localStorage.getItem('accessToken');
+
+    try {
+      const response = await fetch(`http://localhost:5000/trip-stop/create-stop/${tripId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: accessToken ? `Bearer ${accessToken}` : '',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        const errorCode = errorData.statusCode;
+        console.log(errorCode, 'API');
+        throw new Error(errorCode);
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+
+  updateTripStop: async (tripStopId: string, data: ITripStopUpdate): Promise<ITripStop> => {
+    const accessToken = localStorage.getItem('accessToken');
+
+    try {
+      const response = await fetch(`http://localhost:5000/trip-stop/${tripStopId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: accessToken ? `Bearer ${accessToken}` : '',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        const errorCode = errorData.statusCode;
+        console.log(errorCode, 'API');
+        throw new Error(errorCode);
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  deleteTripStop: async (tripStopId: string): Promise<void> => {
+    const accessToken = localStorage.getItem('accessToken');
+
+    try {
+      const response = await fetch(`http://localhost:5000/trip-stop/${tripStopId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: accessToken ? `Bearer ${accessToken}` : '',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        const errorCode = errorData.statusCode;
+        console.log(errorCode, 'API');
+        throw new Error(errorCode);
+      }
+
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  uploadImage: async (file: File, tripStopId: string) => {
+    const accessToken = localStorage.getItem('accessToken');
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const response = await fetch(`http://localhost:5000/trip-stop/${tripStopId}/image`, {
+      method: 'POST',
+      headers: {
+        Authorization: accessToken ? `Bearer ${accessToken}` : '',
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      const errorCode = errorData.statusCode;
+      console.log(errorCode, 'API');
+      throw new Error(errorCode);
+    }
+    return await response.json();
+  },
+
+  //todo use this
+  deleteImage: async (tripStopId: string): Promise<void> => {
+    const accessToken = localStorage.getItem('accessToken');
+
+    try {
+      const response = await fetch(`http://localhost:5000/trip-stop/${tripStopId}/image`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: accessToken ? `Bearer ${accessToken}` : '',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        const errorCode = errorData.statusCode;
+        console.log(errorCode, 'API');
+        throw new Error(errorCode);
+      }
+    } catch (error) {
+      throw error;
+    }
+  },
+};
+//todo add all service for tickets
+const ticketService = {
+  createTicket: async (tripId: string, data: ITicket) => {
+    const accessToken = localStorage.getItem('accessToken');
+
+    const response = await fetch(`http://localhost:5000/tickets/ticket/${tripId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: accessToken ? `Bearer ${accessToken}` : '',
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw errorData;
+    }
+  },
 }
 
-  const tripStopService = {
-    createTripStop: async (tripId: string, data: any): Promise<ITripStop> => {
-      const accessToken = localStorage.getItem('accessToken');
 
-      try {
-        const response = await fetch(`http://localhost:5000/trip-stop/create-stop/${tripId}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: accessToken ? `Bearer ${accessToken}` : '',
-          },
-          body: JSON.stringify(data),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          const errorCode = errorData.statusCode;
-          console.log(errorCode, "API");
-          throw new Error(errorCode);
-        }
-
-        const result = await response.json();
-        return result;
-      } catch (error) {
-        throw error;
-      }
-    },
-    updateTripStop: async (tripStopId: string, data: ITripStopUpdate): Promise<ITripStop> => {
-      const accessToken = localStorage.getItem('accessToken');
-
-      try {
-        const response = await fetch(`http://localhost:5000/trip-stop/${tripStopId}`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: accessToken ? `Bearer ${accessToken}` : '',
-          },
-          body: JSON.stringify(data),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          const errorCode = errorData.statusCode;
-          console.log(errorCode, "API");
-          throw new Error(errorCode);
-        }
-
-        const result = await response.json();
-        return result;
-      } catch (error) {
-        throw error;
-      }
-    },
-
-    deleteTripStop: async (tripStopId: string): Promise<void> => {
-      const accessToken = localStorage.getItem('accessToken');
-
-      try {
-        const response = await fetch(`http://localhost:5000/trip-stop/${tripStopId}`, {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: accessToken ? `Bearer ${accessToken}` : '',
-          },
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          const errorCode = errorData.statusCode;
-          console.log(errorCode, "API");
-          throw new Error(errorCode);
-        }
-
-      } catch (error) {
-        throw error;
-      }
-    }
-  }
-
-
-
-export { authService, passwordService, tripService, tripStopService };
+export { authService, passwordService, tripService, tripStopService, userService, ticketService };

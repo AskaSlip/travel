@@ -3,6 +3,7 @@ import {CreateUpdateModel} from "./models/create-update.model";
 import { TripID, UserID } from '../../common/types/entity-ids.type';
 import { UserEntity } from './user.entity';
 import { TripStopsEntity } from './trip-stop.entity';
+import { TicketEntity } from './ticket.entity';
 
 @Entity('trips')
 
@@ -39,4 +40,7 @@ export class TripEntity extends CreateUpdateModel {
 
     @OneToMany(() => TripStopsEntity, (entity) => entity.trip)
     tripStops: TripStopsEntity[];
+
+    @OneToMany(() => TicketEntity, (entity) => entity.trip)
+    tickets: TicketEntity[];
 }

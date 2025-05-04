@@ -26,7 +26,7 @@ import { MailModule } from '../mail/mail.module';
         GoogleStrategy,
 
     ],
-    exports: [TokenService, AuthCacheService]
+    exports: [TokenService, AuthCacheService, AuthService]
 })
 
 export class AuthModule {}

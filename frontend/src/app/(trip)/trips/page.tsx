@@ -6,7 +6,6 @@ const TripsPage = () => {
 
     return (
         <div>
-            <h1>all my trips</h1>
           <TripsComponent/>
 
         </div>

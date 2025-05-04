@@ -23,6 +23,10 @@ import { keyFromUrl } from '../../../common/helpers/upload-file.helper';
 import { ListTripStopsQueryDto } from '../../trip-stop/models/dto/req/list-trip-stops-query.dto';
 import { TripStopsEntity } from '../../../database/entities/trip-stop.entity';
 import { TripStopsRepository } from '../../repository/services/trip-stops.repository';
+import { TripUpdateReq } from '../models/dto/req/trip-update.req';
+import { ListTicketsQueryDto } from '../../tickets/models/dto/req/list-tickets-query.dto';
+import { TicketEntity } from '../../../database/entities/ticket.entity';
+import { TicketRepository } from '../../repository/services/ticket.repository';
 
 
 @Injectable()
@@ -33,10 +37,18 @@ export class TripsService {
     private readonly configService: ConfigService<Config>,
     private readonly fileStorageService: FileStorageService,
   private readonly tripStopsRepository: TripStopsRepository,
+  private readonly ticketRepository: TicketRepository,
   ) {}
 
   public async createTrip(userData: IUserData, dto: TripReqDto): Promise<TripResDto> {
-    await this.isUserExist(userData.userId);
+    const user = await this.isUserExist(userData.userId);
+
+    if(!user.isVerify){
+      const tripsAmount = await this.tripRepository.count({ where: { user_id: userData.userId } });
+      if (tripsAmount >= 1) {
+        throw new ForbiddenException('You can create only one trip before email confirmation');
+      }
+    }
 
     return await this.tripRepository.save(
       this.tripRepository.create({
@@ -66,6 +78,16 @@ export class TripsService {
     return await this.tripStopsRepository.findAll({ ...query, trip_id: tripId });
   }
 
+
+  public async getTripTickets(userData: IUserData, tripId: TripID, query: ListTicketsQueryDto): Promise<[TicketEntity[], number]> {
+    await this.isUserExist(userData.userId);
+    const trip = await this.tripRepository.findOneBy({ id: tripId });
+    if (!trip) {
+      throw new BadRequestException('Trip not found')
+    }
+    return await this.ticketRepository.findAll({ ...query, trip_id: tripId });
+  }
+
   public async getTripById(userData: IUserData, tripId: TripID): Promise<TripEntity> {
     await this.isUserExist(userData.userId);
 
@@ -93,7 +115,7 @@ export class TripsService {
     await this.tripRepository.delete({ id: tripId });
   }
 
-  public async updateTripById(userData: IUserData, tripId: TripID, dto: TripReqDto): Promise<TripEntity & { user_id: UserID }> {
+  public async updateTripById(userData: IUserData, tripId: TripID, dto: TripUpdateReq): Promise<TripEntity & { user_id: UserID }> {
     await this.isUserExist(userData.userId);
     const trip = await this.tripRepository.findOneBy({ id: tripId });
     if (!trip) {
@@ -152,7 +174,7 @@ export class TripsService {
   }
 
 
-
+// todo розібратись з інвайтами і організувати всю ту штуку з FireBase
   public async generateInvite(tripId: TripID, userData: IUserData): Promise<string> {
     await this.isUserExist(userData.userId);
     const config = this.configService.get<JwtConfig>('jwt') as JwtConfig;

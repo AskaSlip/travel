@@ -34,7 +34,7 @@ const SignUpComponent = () => {
       setIsSuccess(true);
 
       //todo later change redirect
-      setTimeout(() => {router.push('/test')}, 3000);
+      setTimeout(() => {router.push('/')}, 3000);
 
 
     } catch (error) {
@@ -46,7 +46,7 @@ const SignUpComponent = () => {
       <div>
         {
           isSuccess ? (
-            <p>All good. Redirect...</p>
+            <p>Please confirm your acc on email. Mb here will be some component</p>
           ) : (
             <form onSubmit={handleSubmit(onSubmitFormHandler)}>
               <div>

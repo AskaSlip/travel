@@ -14,6 +14,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { MailModule } from './modules/mail/mail.module';
 import { TripsModule } from './modules/trips/trips.module';
 import { TripStopsModule } from './modules/trip-stop/trip-stops.module';
+import { TicketsModule } from './modules/tickets/tickets.module';
 
 @Module({
   imports: [
@@ -31,7 +32,8 @@ import { TripStopsModule } from './modules/trip-stop/trip-stops.module';
     UsersModule,
     MailModule,
     TripsModule,
-    TripStopsModule
+    TripStopsModule,
+    TicketsModule,
   ],
   providers: [
     {

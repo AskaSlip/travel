@@ -69,15 +69,21 @@ const TripByIdPage = () => {
     data: {
       key?: string;
       notes?: string | null;
-      image?: string | null;
+      image?: File | string | null;
     },
   ) => {
     if (!selectedMarker || !data.key) return;
 
+    let imageUrl = typeof data.image === 'string' ? data.image : '';
+    if (data.image instanceof File) {
+      const uploadedImage = await tripStopService.uploadImage(data.image, selectedMarker.id);
+      imageUrl = uploadedImage.image;
+    }
+
     const fixed: ITripStopUpdate = {
       key: data.key,
       notes: data.notes ?? '',
-      image: data.image ?? '',
+      image: imageUrl,
     };
 
     try {
@@ -147,6 +153,9 @@ const TripByIdPage = () => {
           />
         </div>
       </div>
+        <div>
+          <span>ticket box</span>
+        </div>
       </APIProvider>
     </div>
   );
