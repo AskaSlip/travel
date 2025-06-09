@@ -15,6 +15,7 @@ import { MailModule } from './modules/mail/mail.module';
 import { TripsModule } from './modules/trips/trips.module';
 import { TripStopsModule } from './modules/trip-stop/trip-stops.module';
 import { TicketsModule } from './modules/tickets/tickets.module';
+import { BudgetModule } from './modules/budget/budget.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { TicketsModule } from './modules/tickets/tickets.module';
     TripsModule,
     TripStopsModule,
     TicketsModule,
+    BudgetModule,
   ],
   providers: [
     {

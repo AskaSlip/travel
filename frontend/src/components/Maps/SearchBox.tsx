@@ -2,7 +2,7 @@
 import { FC, useEffect, useRef } from 'react';
 
 interface IProps {
-  onPlaceSelect: (latLng: google.maps.LatLngLiteral, name: string, locality: string) => void;
+  onPlaceSelect: (latLng: google.maps.LatLngLiteral, name: string, city: string, county: string) => void;
 }
 
 const SearchBox: FC<IProps> = ({ onPlaceSelect })  => {
@@ -23,15 +23,23 @@ const SearchBox: FC<IProps> = ({ onPlaceSelect })  => {
         lat: place.geometry.location.lat(),
         lng: place.geometry.location.lng()
       };
-
+//todo fix later dublicate
       const geocoder = new window.google.maps.Geocoder();
       geocoder.geocode({ location: place.geometry.location }, (results, status) => {
         if (status === google.maps.GeocoderStatus.OK && results) {
-          const locality = results.find(result =>
-            result.types.includes("locality")
-          )?.address_components[0].long_name || "unknown";
+          const addressComponents = results[0]?.address_components || [];
 
-          onPlaceSelect(latLng, place.name || '', locality);
+          const cityComponent = addressComponents.find(c =>
+            c.types.includes('locality') || c.types.includes('postal_town')
+          );
+          const countryComponent = addressComponents.find(c =>
+            c.types.includes('country')
+          );
+
+          const city = cityComponent?.long_name || 'unknown';
+          const country = countryComponent?.long_name || 'unknown';
+
+          onPlaceSelect(latLng, place.name || '', city, country);
         } else {
           console.error("Не вдалося отримати locality");
         }

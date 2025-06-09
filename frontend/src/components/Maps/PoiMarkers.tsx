@@ -1,4 +1,4 @@
-import { AdvancedMarker, Pin, useMap } from '@vis.gl/react-google-maps';
+import { AdvancedMarker, InfoWindow, Pin, useMap } from '@vis.gl/react-google-maps';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import {MarkerClusterer} from '@googlemaps/markerclusterer';
 import type {Marker} from '@googlemaps/markerclusterer';
@@ -45,6 +45,7 @@ const PoiMarkers: FC <IProps> = ({pois, handleUpdateAction, handleDeleteAction, 
 
   const map = useMap();
   const [markers, setMarkers] = useState<{[key: string]: Marker}>({});
+  const [hoveredPoi, setHoveredPoi] = useState<ITripStop | null>(null);
   const clusterer = useRef<MarkerClusterer | null>(null);
 
 
@@ -117,6 +118,8 @@ const PoiMarkers: FC <IProps> = ({pois, handleUpdateAction, handleDeleteAction, 
           ref={marker => setMarkerRef(marker, poi.key)}
           clickable={true}
           onClick={handleMarkerClick(poi)}
+          onMouseEnter={() => setHoveredPoi(poi)}
+          onMouseLeave={() => setHoveredPoi(null)}
           >
           <Pin background={'rgba(127,61,217,0.14)'} glyphColor={'rgba(0,0,0,0)'} borderColor={'rgba(0,0,0,0)'} />
         </AdvancedMarker>
@@ -126,7 +129,7 @@ const PoiMarkers: FC <IProps> = ({pois, handleUpdateAction, handleDeleteAction, 
       {selectedMarker && (
         <PinModal
           onSaveAction={handleUpdateAction}
-          onDeleteAction={() => selectedMarker && handleDeleteAction(selectedMarker.id)}
+          onDeleteAction={() => selectedMarker && handleDeleteAction(selectedMarker.id!)}
           open={isModalOpen}
           onOpenChangeAction={setIsModalOpen}
           textAreas={textAreas}
@@ -138,6 +141,26 @@ const PoiMarkers: FC <IProps> = ({pois, handleUpdateAction, handleDeleteAction, 
           }
         }
         />
+      )}
+
+      {hoveredPoi && (
+        <InfoWindow
+          position={{ lat: hoveredPoi.lat, lng: hoveredPoi.lng }}
+          onCloseClick={() => setHoveredPoi(null)}
+        >
+          <div style={{ maxWidth: '200px' }}>
+            <strong>{hoveredPoi.key}</strong>
+            {hoveredPoi.image ? (
+              <img
+                src={hoveredPoi.image as string}
+                alt="Preview"
+                style={{ width: '100%', marginTop: '5px', borderRadius: '8px' }}
+              />
+            ) : (
+              <p style={{ fontStyle: 'italic', marginTop: '5px' }}>No image</p>
+            )}
+          </div>
+        </InfoWindow>
       )}
     </div>
   );

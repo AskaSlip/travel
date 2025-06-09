@@ -49,9 +49,9 @@ export const createTripSchema = z.object({
   trip_picture: z
     .any()
     .optional()
-    .refine((file) => file instanceof File || file === undefined, {
-      message: "Invalid file format",
-    }),
+    // .refine((file) => file instanceof File || file === undefined, {
+    //   message: "Invalid file format",
+    // }),
 });
 
 export const tripStopCreateSchema = z.object({
@@ -61,12 +61,17 @@ export const tripStopCreateSchema = z.object({
   image: z
     .any()
     .optional()
-    .refine((file) => file instanceof File || file === undefined, {
-      message: "Invalid file format",
-    }),
+    // .refine((file) => file instanceof File || file === undefined, {
+    //   message: "Invalid file format",
+    // }),
 });
 
 export const tripStopUpdateSchema = tripStopCreateSchema.partial();
+
+export const budgetCategorySchema = z.object({
+  category: z.string().min(3, { message: 'Must be 3 or more characters long' }).max(200),
+  value: z.string().min(0, { message: 'Budget must be higher than 0' }),
+})
 
 
 
@@ -78,3 +83,4 @@ export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 export type CreateTripFormData = z.infer<typeof createTripSchema>;
 export type TripStopCreateFormData = z.infer<typeof tripStopCreateSchema>;
 export type TripStopUpdateFormData = z.infer<typeof tripStopUpdateSchema>;
+export type BudgetCategoryFormData = z.infer<typeof budgetCategorySchema>;

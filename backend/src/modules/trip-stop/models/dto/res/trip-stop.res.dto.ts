@@ -8,7 +8,9 @@ export class TripStopResDto {
   notes: string;
   lat: number;
   lng: number;
-  locality: string;
+  city: string;
+  country: string;
+  iso_code: string;
   image?: string;
   trip_id: TripID;
 }

@@ -53,7 +53,7 @@ const MyCabinetPage = () => {
             </div>
             <div>
               <Link href={'/change-password'}>
-                <button>Change password</button>
+                <button className="border-4 border-indigo-500 ">Change password</button>
               </Link>
             </div>
             <div>
@@ -67,7 +67,7 @@ const MyCabinetPage = () => {
                 }
               </div>
             <div>
-              <button onClick={handleOpenModal}>
+              <button onClick={handleOpenModal} className="rounded-xl border-4 border-indigo-500  bg-red-500 px-2 py-2 text-white hover:bg-red-600">
                 delete account
               </button>
             </div>

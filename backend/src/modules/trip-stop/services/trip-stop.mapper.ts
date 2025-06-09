@@ -12,7 +12,9 @@ export class TripStopMapper {
             lat: tripStop.lat,
             lng: tripStop.lng,
             trip_id: tripStop.trip_id,
-            locality: tripStop.locality,
+            city: tripStop.city,
+            country: tripStop.country,
+            iso_code: tripStop.iso_code,
             image: tripStop.image,
         }
     }

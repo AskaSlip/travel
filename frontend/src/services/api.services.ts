@@ -8,6 +8,7 @@ import { IChangePassword } from '@/models/IChangePassword';
 import { ITripStop, ITripStopUpdate } from '@/models/ITripStop';
 import { IUser, IUserUpdate } from '@/models/IUser';
 import { ITicket } from '@/models/ITicket';
+import { IBudget } from '@/models/IBudget';
 
 
 const userService = {
@@ -441,8 +442,46 @@ const tripService = {
       throw new Error('Failed to get trip stops');
     }
   },
+  getTripTickets: async (tripId: string): Promise<ITicket[]> => {
+    const accessToken = localStorage.getItem('accessToken');
 
-  // todo delete trip
+    try {
+      const response = await fetch(`http://localhost:5000/trips/${tripId}/tickets`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: accessToken ? `Bearer ${accessToken}` : '',
+        },
+      });
+      const data = await response.json();
+      return data.data;
+    } catch (error) {
+      throw new Error('Failed to get trip tickets');
+    }
+  },
+
+  deleteTrip: async (tripId: string): Promise<void> => {
+    const accessToken = localStorage.getItem('accessToken');
+
+    try {
+      const response = await fetch(`http://localhost:5000/trips/${tripId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: accessToken ? `Bearer ${accessToken}` : '',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        const errorCode = errorData.statusCode;
+        console.log(errorCode, 'API');
+        throw new Error(errorCode);
+      }
+    } catch (error) {
+      throw error;
+    }
+  },
 
   uploadImage: async (file: File, tripId: string): Promise<void> => {
     const accessToken = localStorage.getItem('accessToken');
@@ -620,9 +659,8 @@ const tripStopService = {
     }
   },
 };
-//todo add all service for tickets
 const ticketService = {
-  createTicket: async (tripId: string, data: ITicket) => {
+  createTicket: async (tripId: string, data: ITicket):Promise<ITicket> => {
     const accessToken = localStorage.getItem('accessToken');
 
     const response = await fetch(`http://localhost:5000/tickets/ticket/${tripId}`, {
@@ -638,8 +676,154 @@ const ticketService = {
       const errorData = await response.json();
       throw errorData;
     }
+    const createdTicket: ITicket = await response.json();
+    return createdTicket;
+  },
+  deleteTicket: async (ticketId: string) => {
+    const accessToken = localStorage.getItem('accessToken');
+
+    const response = await fetch(`http://localhost:5000/tickets/ticket/${ticketId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: accessToken ? `Bearer ${accessToken}` : '',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw errorData;
+    }
+  },
+  uploadFile: async (ticketId: string, file: File) => {
+    const accessToken = localStorage.getItem('accessToken');
+
+    const formData = new FormData();
+    formData.append('file_url', file);
+
+    const response = await fetch(`http://localhost:5000/tickets/${ticketId}/file`, {
+      method: 'POST',
+      headers: {
+        Authorization: accessToken ? `Bearer ${accessToken}` : '',
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw errorData;
+    }
+  },
+  deleteFile: async (ticketId: string) => {
+    const accessToken = localStorage.getItem('accessToken');
+
+    const response = await fetch(`http://localhost:5000/tickets/${ticketId}/file`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: accessToken ? `Bearer ${accessToken}` : '',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw errorData;
+    }
   },
 }
 
+const budgetService = {
+  addCategory: async (tripId: string, data: IBudget): Promise<IBudget> => {
+    const accessToken = localStorage.getItem('accessToken');
 
-export { authService, passwordService, tripService, tripStopService, userService, ticketService };
+    const response = await fetch (`http://localhost:5000/budget/budget/${tripId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: accessToken ? `Bearer ${accessToken}` : '',
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw errorData;
+    }
+    return await response.json();
+  },
+
+  updateCategory: async (budgetId: string, data: {value: string}): Promise<IBudget> => {
+    const accessToken = localStorage.getItem('accessToken');
+
+    const response = await fetch(`http://localhost:5000/budget/budget/${budgetId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: accessToken ? `Bearer ${accessToken}` : '',
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw errorData;
+    }
+    return await response.json();
+  },
+
+  deleteCategory: async (budgetId: string): Promise <void> => {
+    const accessToken = localStorage.getItem('accessToken');
+
+    const response = await fetch(`http://localhost:5000/budget/budget/${budgetId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: accessToken ? `Bearer ${accessToken}` : '',
+      },
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw errorData;
+    }
+    },
+
+  assignMaxBudget: async (tripId: string, data: string): Promise<string> => {
+    const accessToken = localStorage.getItem('accessToken');
+
+    const response = await fetch(`http://localhost:5000/trips/${tripId}/max-budget`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: accessToken ? `Bearer ${accessToken}` : '',
+      },
+      body: JSON.stringify({ maxBudget: data }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw errorData;
+    }
+    return await response.json();
+  },
+
+  getAllBudgetByTripId: async(tripId: string): Promise<IBudget[]> => {
+    const accessToken = localStorage.getItem('accessToken');
+
+    const response = await fetch (`http://localhost:5000/trips/${tripId}/budget`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: accessToken ? `Bearer ${accessToken}` : '',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw errorData;
+    }
+    const result = await response.json();
+    return result.data;
+  }
+}
+
+
+export { authService, passwordService, tripService, tripStopService, userService, ticketService, budgetService };

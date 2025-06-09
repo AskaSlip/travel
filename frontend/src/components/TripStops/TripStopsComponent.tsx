@@ -5,7 +5,6 @@ import PinModal from '@/modals/PinModal';
 import { useMap } from '@vis.gl/react-google-maps';
 
 interface IProps {
-  // tripId: string;
   tripStops: ITripStop[];
   onEditAction: (data: TripStopUpdateFormData) => void;
   onDeleteAction: (id: string) => void;
@@ -15,22 +14,8 @@ interface IProps {
 
 const TripStopsComponent: FC<IProps> = ({ tripStops, onEditAction, onDeleteAction, setSelectedStop, selectedStop }) => {
 
-  // const [tripStops, setTripStops] = useState<ITripStop[]>([]);
   const [modalOpen, setModalOpen] = useState<boolean>(false);
   const map = useMap();
-
-  // useEffect(() => {
-  //   tripService.getTripStops(tripId)
-  //     .then((data) => {
-  //       console.log("stops", data);
-  //       setTripStops(Array.isArray(data) ? data : []);
-  //     })
-  //     .catch((error) => {
-  //       console.error("Error fetching trip stops:", error);
-  //       setTripStops([]);
-  //     })
-  //
-  // }, [tripId]);
 
   const handleEditClick = (stop: ITripStop) => {
     setSelectedStop(stop);
@@ -44,7 +29,7 @@ const TripStopsComponent: FC<IProps> = ({ tripStops, onEditAction, onDeleteActio
 
   const handleModalDelete = () => {
     if (selectedStop) {
-      onDeleteAction(selectedStop.id);
+      onDeleteAction(selectedStop.id!);
       setModalOpen(false);
     }
   };
@@ -71,7 +56,7 @@ const TripStopsComponent: FC<IProps> = ({ tripStops, onEditAction, onDeleteActio
             <div id={'edit-delete'}>
               <button onClick={() => handleEditClick(stop)}
               >edit</button>
-              <button onClick={() => onDeleteAction(stop.id)}>delete</button>
+              <button onClick={() => onDeleteAction(stop.id!)}>delete</button>
             </div>
           </li>
         ))}

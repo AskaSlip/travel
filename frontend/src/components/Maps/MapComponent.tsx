@@ -35,6 +35,7 @@ const MapComponent: FC<IProps> = ({ tripId, children, tripStops, setTripStops })
   const [selectedMarker, setSelectedMarker] = useState<IUserMarker | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
+
   //check for file
   const isFile = (value: unknown): value is File => {
     return typeof File !== 'undefined' && value instanceof File;
@@ -45,32 +46,40 @@ const MapComponent: FC<IProps> = ({ tripId, children, tripStops, setTripStops })
   }, []);
 
 
-  //todo not sure that I will need it (locality)
   const getLocality = (latLng: google.maps.LatLngLiteral) => {
     const geocoder = new window.google.maps.Geocoder();
-    return new Promise<{ locality: string; name: string }>((resolve, reject) => {
+    return new Promise<{ city: string; country: string; iso_code:string; name: string }>((resolve, reject) => {
       geocoder.geocode({ location: latLng }, (results, status) => {
         if (status === google.maps.GeocoderStatus.OK && results) {
-          const localityResult = results.find(result =>
-            result.types.includes('locality'),
+          const addressComponents = results[0]?.address_components || [];
+          // console.log(JSON.stringify(results, null, 2));
+
+          const cityComponent = addressComponents.find(c =>
+            c.types.includes('locality') || c.types.includes('postal_town')
           );
-          const locality = localityResult ? localityResult.address_components[0].long_name : 'unknown';
+          const countryComponent = addressComponents.find(c =>
+            c.types.includes('country')
+          );
+
+          const city = cityComponent?.long_name || 'unknown';
+          const country = countryComponent?.long_name || 'unknown';
+          const iso_code = countryComponent?.short_name || 'unknown';
           const name = results[0]?.formatted_address || 'unknown';
-          resolve({ locality, name });
+
+          resolve({ city, country,iso_code, name });
         } else {
-          reject('no info about locality');
+          reject('no info about city/country');
         }
       });
     });
   };
 
-
   const onMapClick = async (ev: MapMouseEvent) => {
     const latLng = ev.detail.latLng;
     if (latLng) {
       try {
-        const { locality, name } = await getLocality(latLng);
-        const newMarker = { lat: latLng.lat, lng: latLng.lng, name, locality };
+        const { city, country, iso_code, name } = await getLocality(latLng);
+        const newMarker = { lat: latLng.lat, lng: latLng.lng, name, city, country, iso_code };
         setUserMarker((prev) => [...prev, newMarker]);
         setSelectedMarker(newMarker);
         setIsModalOpen(true);
@@ -81,7 +90,7 @@ const MapComponent: FC<IProps> = ({ tripId, children, tripStops, setTripStops })
   };
 
   console.log('selected', selectedMarker);
-  console.log(userMarker);
+  console.log(userMarker, 'userMarker');
 
   const handleMarkerClick = (marker: IUserMarker) => {
     console.log('Клік на маркер', marker);
@@ -101,12 +110,15 @@ try{
       image: '',
       lat: selectedMarker.lat,
       lng: selectedMarker.lng,
-      locality: selectedMarker.locality,
+      city: selectedMarker.city,
+      country: selectedMarker.country,
+      iso_code: selectedMarker.iso_code,
+
     })
 
 
   if (isFile(data.image)) {
-    const updatedStop = await tripStopService.uploadImage(data.image, newStop.id);
+    const updatedStop = await tripStopService.uploadImage(data.image, newStop.id!);
     newStop.image = updatedStop.image;
   }
 
@@ -116,6 +128,9 @@ try{
         lat: Number(newStop.lat),
         lng: Number(newStop.lng),
         image: newStop.image,
+        city: newStop.city,
+        iso_code: newStop.iso_code,
+
       };
 
   setUserMarker((current) =>
@@ -167,8 +182,8 @@ try{
 
         >
           <SearchBox
-            onPlaceSelect={(latLng, name, locality) => {
-              const newMarker = { lat: latLng.lat, lng: latLng.lng, name, locality };
+            onPlaceSelect={(latLng, name, city, country) => {
+              const newMarker = { lat: latLng.lat, lng: latLng.lng, name, city, country };
               setUserMarker((prev) => [...prev, newMarker]);
               setSelectedMarker(newMarker);
               setIsModalOpen(true);

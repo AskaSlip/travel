@@ -4,6 +4,7 @@ import { TripID, UserID } from '../../common/types/entity-ids.type';
 import { UserEntity } from './user.entity';
 import { TripStopsEntity } from './trip-stop.entity';
 import { TicketEntity } from './ticket.entity';
+import { BudgetEntity } from './budget.entity';
 
 @Entity('trips')
 
@@ -29,6 +30,9 @@ export class TripEntity extends CreateUpdateModel {
     @Column({ type: 'text', nullable: true })
     inviteToken?: string;
 
+    @Column({ type: 'text', nullable: true })
+    maxBudget?: string;
+
     @Column()
     user_id: UserID;
     @ManyToOne(() => UserEntity, (entity) => entity.trips, {
@@ -43,4 +47,7 @@ export class TripEntity extends CreateUpdateModel {
 
     @OneToMany(() => TicketEntity, (entity) => entity.trip)
     tickets: TicketEntity[];
+
+    @OneToMany(() => BudgetEntity, (entity) => entity.trip)
+    budgets: BudgetEntity[];
 }

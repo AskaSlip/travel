@@ -18,10 +18,12 @@ import { ApiFile } from '../../common/decorators/api-file.decorator';
 import { ListTripStopsQueryDto } from '../trip-stop/models/dto/req/list-trip-stops-query.dto';
 import { ListTripStopsResDto } from '../trip-stop/models/dto/res/list-trip-stops.res.dto';
 import { TripStopMapper } from '../trip-stop/services/trip-stop.mapper';
-import { TripUpdateReq } from './models/dto/req/trip-update.req';
+import { TripBudget, TripUpdateReq } from './models/dto/req/trip-update.req';
 import { ListTicketsQueryDto } from '../tickets/models/dto/req/list-tickets-query.dto';
 import { ListTicketsResDto } from '../tickets/models/dto/res/list-tickets.res.dto';
 import { TicketsMapper } from '../tickets/services/tickets.mapper';
+import { BudgetResDto } from '../budget/models/dto/res/budget.res.dto';
+import { BudgetMapper } from '../budget/services/budget.mapper';
 //todo update here with role
 @ApiTags('trips')
 @Controller('trips')
@@ -36,7 +38,7 @@ export class TripsController {
     @Body() dto: TripReqDto,
   ): Promise<TripResDto> {
     const result = await this.tripsService.createTrip(userData, dto);
-    return TripMapper.toResDto({ ...result, tripStops: [], tickets: [] });
+    return TripMapper.toResDto({ ...result, tripStops: [], tickets: [], budgets: [] });
   }
 
   //trips by user
@@ -61,15 +63,15 @@ export class TripsController {
     return TripMapper.toResDtoList(entities, total, query);
   }
 
-  @ApiBearerAuth()
-  @Post('join')
-  async joinTrip(
-    @Query('token') token: string,
-    @CurrentUser() userData: IUserData,
-  ): Promise<{ message: string }> {
-    await this.tripsService.joinTrip(token, userData);
-    return { message: 'You are now an editor of this trip.' };
-  }
+  // @ApiBearerAuth()
+  // @Post('join')
+  // async joinTrip(
+  //   @Query('token') token: string,
+  //   @CurrentUser() userData: IUserData,
+  // ): Promise<{ message: string }> {
+  //   await this.tripsService.joinTrip(token, userData);
+  //   return { message: 'You are now an editor of this trip.' };
+  // }
 
 
 //user
@@ -160,6 +162,26 @@ export class TripsController {
     return TicketsMapper.toResDtoList(entities, total, query);
   }
 
+  @ApiBearerAuth()
+  @Get(':tripId/budget')
+  public async getTripBudget(
+    @CurrentUser() userData: IUserData,
+    @Param('tripId') tripId: TripID,
+  ): Promise<{ data: BudgetResDto[] }> {
+    const entities = await this.tripsService.getTripBudget(userData, tripId);
+    return BudgetMapper.toResDtoList(entities);
+  }
+
+  @ApiBearerAuth()
+  @Patch(':tripId/max-budget')
+  public async assignMaxBudget(
+    @CurrentUser() userData: IUserData,
+    @Param('tripId') tripId: TripID,
+    @Body() dto: TripBudget
+  ): Promise<TripBudget> {
+    return await this.tripsService.assignMaxBudget(userData, tripId, dto);
+  }
+
 
   @ApiBearerAuth()
   @ApiConsumes('multipart/form-data')
@@ -186,13 +208,13 @@ export class TripsController {
 
 
 
-  @ApiBearerAuth()
-  @Post(':tripId/invite')
-  async generateInvite(
-    @Param('tripId') tripId: TripID,
-    @CurrentUser() userData: IUserData,
-  ): Promise<{inviteLink: string}> {
-    const inviteLink = await this.tripsService.generateInvite(tripId, userData);
-    return { inviteLink };
-  }
+  // @ApiBearerAuth()
+  // @Post(':tripId/invite')
+  // async generateInvite(
+  //   @Param('tripId') tripId: TripID,
+  //   @CurrentUser() userData: IUserData,
+  // ): Promise<{inviteLink: string}> {
+  //   const inviteLink = await this.tripsService.generateInvite(tripId, userData);
+  //   return { inviteLink };
+  // }
 }

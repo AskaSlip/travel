@@ -1,3 +1,5 @@
+import WeatherWidgetComponent from '@/components/Weather/WeatherWidgetComponent';
+
 const InspirePage = () => {
   return (
     <div>

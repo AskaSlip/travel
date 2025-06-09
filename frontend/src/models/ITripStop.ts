@@ -1,8 +1,10 @@
 export interface ITripStop {
-  id: string;
+  id?: string;
   key: string;
   notes?: string | '';
-  locality?: string;
+  city?: string;
+  country?: string;
+  iso_code?: string
   image?: string | '' | File;
   lat: number;
   lng: number;
@@ -13,3 +15,5 @@ export interface ITripStopUpdate{
   notes: string;
   image: string | File;
 }
+
+export interface ITripStopForecast extends Pick<ITripStop, 'country'| 'city' | 'iso_code' | 'lng' | 'lat'> {}

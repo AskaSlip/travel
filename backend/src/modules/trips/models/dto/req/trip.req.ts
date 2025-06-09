@@ -1,12 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import {
-  IsDateString,
-  IsOptional,
-  IsString, IsUrl,
-  Length,
-
-} from 'class-validator';
+import { IsDateString, IsOptional, IsString, Length } from 'class-validator';
 import { TransformHelper } from '../../../../../common/helpers/transform.helper';
 
 
@@ -31,4 +25,8 @@ export class TripReqDto {
   @IsString()
   @Length(0, 2000)
   trip_picture?: string;
+
+  @IsOptional()
+  @IsString()
+  maxBudget?: string;
 }

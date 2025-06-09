@@ -23,10 +23,12 @@ import { keyFromUrl } from '../../../common/helpers/upload-file.helper';
 import { ListTripStopsQueryDto } from '../../trip-stop/models/dto/req/list-trip-stops-query.dto';
 import { TripStopsEntity } from '../../../database/entities/trip-stop.entity';
 import { TripStopsRepository } from '../../repository/services/trip-stops.repository';
-import { TripUpdateReq } from '../models/dto/req/trip-update.req';
+import { TripBudget, TripUpdateReq } from '../models/dto/req/trip-update.req';
 import { ListTicketsQueryDto } from '../../tickets/models/dto/req/list-tickets-query.dto';
 import { TicketEntity } from '../../../database/entities/ticket.entity';
 import { TicketRepository } from '../../repository/services/ticket.repository';
+import { BudgetRepository } from '../../repository/services/budget.repository';
+import { BudgetEntity } from '../../../database/entities/budget.entity';
 
 
 @Injectable()
@@ -38,6 +40,7 @@ export class TripsService {
     private readonly fileStorageService: FileStorageService,
   private readonly tripStopsRepository: TripStopsRepository,
   private readonly ticketRepository: TicketRepository,
+  private readonly budgetRepository: BudgetRepository,
   ) {}
 
   public async createTrip(userData: IUserData, dto: TripReqDto): Promise<TripResDto> {
@@ -86,6 +89,27 @@ export class TripsService {
       throw new BadRequestException('Trip not found')
     }
     return await this.ticketRepository.findAll({ ...query, trip_id: tripId });
+  }
+
+  public async getTripBudget(userData: IUserData, tripId: TripID): Promise<BudgetEntity[]> {
+    await this.isUserExist(userData.userId);
+    const trip = await this.tripRepository.findOneBy({ id: tripId });
+    if (!trip) {
+      throw new BadRequestException('Trip not found')
+    }
+    return await this.budgetRepository.findAll({trip_id: tripId });
+  }
+
+  public async assignMaxBudget(userData: IUserData, tripId: TripID, dto: TripBudget): Promise<TripBudget>{
+    await this.isUserExist(userData.userId)
+    const trip = await this.tripRepository.findOneBy({ id: tripId });
+    if (!trip) {
+      throw new BadRequestException('Trip not found');
+    }
+    return await this.tripRepository.save({
+      ...trip,
+      maxBudget: dto.maxBudget,
+    })
   }
 
   public async getTripById(userData: IUserData, tripId: TripID): Promise<TripEntity> {
@@ -175,38 +199,38 @@ export class TripsService {
 
 
 // todo розібратись з інвайтами і організувати всю ту штуку з FireBase
-  public async generateInvite(tripId: TripID, userData: IUserData): Promise<string> {
-    await this.isUserExist(userData.userId);
-    const config = this.configService.get<JwtConfig>('jwt') as JwtConfig;
-
-    const trip = await this.tripRepository.findOneBy({ id: tripId });
-    if (!trip || trip.user_id !== userData.userId) {
-      throw new ForbiddenException('Only trip owner can generate invite link');
-    }
-    const inviteToken = jwt.sign({tripId}, config.accessSecret, {expiresIn: '24hr'})
-
-    await this.tripRepository.update(tripId, {inviteToken});
-    return `${process.env.FRONTEND_URL}/invite/${tripId}?token=${inviteToken}`;
-  }
-
-  public async joinTrip(token: string, userData: IUserData): Promise<void>{
-    const config = this.configService.get<JwtConfig>('jwt') as JwtConfig;
-
-    try {
-      const decoded: any = jwt.verify(token, config.accessSecret) as { tripId: TripID };
-      const trip = await this.tripRepository.findOneBy({ id: decoded.tripId });
-
-      if (!trip) {
-        throw new NotFoundException('Trip not found');
-      }
-
-      if(!trip.editor_id){
-        await this.tripRepository.update(decoded.tripId, { editor_id: userData.userId });
-      }
-    }catch(error){
-      throw new ForbiddenException("Invalid or expired invite link")
-    }
-  }
+//   public async generateInvite(tripId: TripID, userData: IUserData): Promise<string> {
+//     await this.isUserExist(userData.userId);
+//     const config = this.configService.get<JwtConfig>('jwt') as JwtConfig;
+//
+//     const trip = await this.tripRepository.findOneBy({ id: tripId });
+//     if (!trip || trip.user_id !== userData.userId) {
+//       throw new ForbiddenException('Only trip owner can generate invite link');
+//     }
+//     const inviteToken = jwt.sign({tripId}, config.accessSecret, {expiresIn: '24hr'})
+//
+//     await this.tripRepository.update(tripId, {inviteToken});
+//     return `${process.env.FRONTEND_URL}/invite/${tripId}?token=${inviteToken}`;
+//   }
+//
+//   public async joinTrip(token: string, userData: IUserData): Promise<void>{
+//     const config = this.configService.get<JwtConfig>('jwt') as JwtConfig;
+//
+//     try {
+//       const decoded: any = jwt.verify(token, config.accessSecret) as { tripId: TripID };
+//       const trip = await this.tripRepository.findOneBy({ id: decoded.tripId });
+//
+//       if (!trip) {
+//         throw new NotFoundException('Trip not found');
+//       }
+//
+//       if(!trip.editor_id){
+//         await this.tripRepository.update(decoded.tripId, { editor_id: userData.userId });
+//       }
+//     }catch(error){
+//       throw new ForbiddenException("Invalid or expired invite link")
+//     }
+//   }
 
 
 

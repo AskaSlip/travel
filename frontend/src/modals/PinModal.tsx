@@ -76,7 +76,7 @@ export default function PinModal({ initialData, onSaveAction, onDeleteAction, op
         fileInputRef.current.value = '';
       }
     }
-  }, [initialData, mode, reset]);
+  }, [initialData, mode, open]);
 
   const handleFormSubmit = (data: TripStopCreateFormData | TripStopUpdateFormData) => {
     onSaveAction(data);
@@ -115,7 +115,7 @@ export default function PinModal({ initialData, onSaveAction, onDeleteAction, op
                 ref={fileInputRef}
                 onChange={handleFileChange}
               />
-              {errors?.image?.message && <span>{String(errors.image.message)}</span>}
+              {errors?.image?.message && <span>{String(errors.image.message)} from html</span>}
 
               {previewImage && (
                 <div>

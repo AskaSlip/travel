@@ -1,6 +1,9 @@
 export interface IUserMarker {
   lat: number;
   lng: number;
-  locality: string,
+  city?: string;
+  country?: string;
+  iso_code?: string;
   name?: string,
+  image?: string | null;
 }

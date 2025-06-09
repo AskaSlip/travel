@@ -22,7 +22,13 @@ export class TripStopsEntity extends CreateUpdateModel {
     lng: number
 
     @Column('text', {nullable: true})
-    locality: string;
+    city: string;
+
+    @Column('text', {nullable: true})
+    country: string;
+
+    @Column('text', {nullable: true})
+    iso_code: string;
 
     @Column('text', {nullable: true})
     image?: string;

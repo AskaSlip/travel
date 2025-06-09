@@ -5,11 +5,16 @@ import MapComponent from '@/components/Maps/MapComponent';
 import { ITrip } from '@/models/ITrip';
 import { tripService, tripStopService } from '@/services/api.services';
 import TripComponent from '@/components/Trip/TripComponent';
-import TripStopsComponent from '@/components/TripStopsComponent/TripStopsComponent';
+import TripStopsComponent from '@/components/TripStops/TripStopsComponent';
 import styles from './id-style.module.css';
 import { ITripStop, ITripStopUpdate } from '@/models/ITripStop';
 import PoiMarkers from '@/components/Maps/PoiMarkers';
 import { APIProvider } from '@vis.gl/react-google-maps';
+import TripForecastComponent from '@/components/Weather/TripForecastComponent';
+import TicketsComponent from '@/components/Tickets/TicketsComponent';
+import CurrencyConvertorComponent from '@/components/CurrencyConvertor/CurrencyConvertorComponent';
+import { amadeusServices } from '@/services/amadeus.services';
+import BudgetComponent from '@/components/Budget/BudgetComponent';
 
 const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string;
 
@@ -20,7 +25,8 @@ const TripByIdPage = () => {
 
   const { id } = useParams() as { id: string };
   const [trip, setTrip] = useState<ITrip>();
-  const [tripStops, setTripStops] = useState<ITripStop[]>(trip?.tripStops ?? []);
+  // const [tripStops, setTripStops] = useState<ITripStop[]>(trip?.tripStops ?? []);
+  const [tripStops, setTripStops] = useState<ITripStop[]>([]);
   const [selectedMarker, setSelectedMarker] = useState<ITripStop | null>(null);
   const [hasChanges, setHasChanges] = useState<boolean>(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -41,6 +47,7 @@ const TripByIdPage = () => {
           ...stop,
           lat: Number(stop.lat),
           lng: Number(stop.lng),
+          city: stop.city,
         }));
         setTripStops(stops);
       } catch (err) {
@@ -53,17 +60,6 @@ const TripByIdPage = () => {
   }, [id]);
   console.log('stooop from set', tripStops);
 
-  // const handleOpenCreateModal = (newMarker: ITripStop) => {
-  //   setSelectedMarker(newMarker);
-  //   setMode('create');
-  //   setIsModalOpen(true);
-  // };
-  //
-  // const handleOpenEditModal = (marker: ITripStop) => {
-  //   setSelectedMarker(marker);
-  //   setMode('edit');
-  //   setIsModalOpen(true);
-  // };
 
   const handleUpdate = async (
     data: {
@@ -76,7 +72,7 @@ const TripByIdPage = () => {
 
     let imageUrl = typeof data.image === 'string' ? data.image : '';
     if (data.image instanceof File) {
-      const uploadedImage = await tripStopService.uploadImage(data.image, selectedMarker.id);
+      const uploadedImage = await tripStopService.uploadImage(data.image, selectedMarker.id!);
       imageUrl = uploadedImage.image;
     }
 
@@ -88,7 +84,7 @@ const TripByIdPage = () => {
 
     try {
       setHasChanges(true);
-      await tripStopService.updateTripStop(selectedMarker.id, fixed);
+      await tripStopService.updateTripStop(selectedMarker.id!, fixed);
 
       setTripStops((prev) =>
         prev.map((poi) =>
@@ -119,42 +115,68 @@ const TripByIdPage = () => {
     }
   };
 
+//todo зробити потім амадеус, бо це просто єбаний кал
+  // useEffect(() => {
+  //   const getAmadeusToken = async () => {
+  //     try {
+  //       const token = await amadeusServices.getAmadeusToken();
+  //       console.log('Valid Amadeus token:', token);
+  //     } catch (e) {
+  //       console.error('Failed to get token:', e);
+  //     }
+  //   }
+  //   getAmadeusToken();
+  // }, []);
 
   if (!trip) return null;
 
   return (
-    <div className={styles.wrap}>
+    <div className={styles.tripWrapper}>
       <APIProvider apiKey={key}
                    onLoad={() => console.log('Maps API has loaded.')}
                    libraries={googleMapsLibraries}
+                   language={'en'}
       >
-      <div className={styles.wrap}>
+        <TripComponent trip={trip} />
+        <div className={styles.wrapMapAndStops}>
+          <div>
+            <MapComponent tripId={id} setTripStops={setTripStops} tripStops={tripStops}>
+              <PoiMarkers
+                pois={tripStops}
+                handleUpdateAction={handleUpdate}
+                handleDeleteAction={handleDelete}
+                selectedMarker={selectedMarker}
+                setSelectedMarker={setSelectedMarker}
+                isModalOpen={isModalOpen}
+                setIsModalOpen={setIsModalOpen} />
+            </MapComponent>
+          </div>
+          <div>
+            <TripStopsComponent
+              tripStops={tripStops}
+              onEditAction={handleUpdate}
+              onDeleteAction={handleDelete}
+              selectedStop={selectedMarker}
+              setSelectedStop={setSelectedMarker}
+            />
+          </div>
+        </div>
+        <hr />
         <div>
-          <TripComponent trip={trip} />
-          <hr />
-          <MapComponent tripId={id} setTripStops={setTripStops} tripStops={tripStops}>
-            <PoiMarkers
-              pois={tripStops}
-              handleUpdateAction={handleUpdate}
-              handleDeleteAction={handleDelete}
-              selectedMarker={selectedMarker}
-              setSelectedMarker={setSelectedMarker}
-              isModalOpen={isModalOpen}
-              setIsModalOpen={setIsModalOpen} />
-          </MapComponent>
+          <TripForecastComponent tripStops={tripStops} />
+        </div>
+        <hr />
+        <div>
+          <CurrencyConvertorComponent tripStops={tripStops} />
         </div>
         <div>
-          <TripStopsComponent
-            tripStops={tripStops}
-            onEditAction={handleUpdate}
-            onDeleteAction={handleDelete}
-            selectedStop={selectedMarker}
-            setSelectedStop={setSelectedMarker}
-          />
+           <BudgetComponent id={id}/>
         </div>
-      </div>
+        <div className={styles.tickets}>
+          <TicketsComponent tripId={id} />
+        </div>
         <div>
-          <span>ticket box</span>
+          <span>amadeus api</span>
         </div>
       </APIProvider>
     </div>

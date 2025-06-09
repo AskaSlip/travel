@@ -1,8 +1,21 @@
-/*.wrap {*/
-/*    height: 100%;*/
-/*    border: #2fff00 solid 3px;*/
-/*    display: flex;*/
-/*    align-content: center;*/
-/*    justify-content: space-around;*/
-/*    align-items: center;*/
-/*}*/
+.tripWrapper{
+    height: 100%;
+    width: 80vw;
+    border: crimson 3px solid;
+}
+
+.wrapMapAndStops {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 5vw;
+
+}
+
+.tickets {
+    width: 150px;
+    height: 150px;
+    background-color: #0077ff;
+
+}

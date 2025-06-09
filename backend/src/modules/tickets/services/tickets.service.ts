@@ -50,21 +50,21 @@ export class TicketsService {
   }
 
 
-  public async updateTicket(
-    userData: IUserData,
-    dto: TicketUpdateReq,
-    ticketId: TicketID,
-  ): Promise<TicketResDto> {
-    await this.isUserExist(userData.userId);
-    const ticket = await this.ticketRepository.findOneBy({ id: ticketId });
-    if (!ticket) {
-      throw new NotFoundException('Ticket not found');
-    }
-    return await this.ticketRepository.save({
-      ...ticket,
-      ...dto,
-    });
-  }
+  // public async updateTicket(
+  //   userData: IUserData,
+  //   dto: TicketUpdateReq,
+  //   ticketId: TicketID,
+  // ): Promise<BudgetResDto> {
+  //   await this.isUserExist(userData.userId);
+  //   const ticket = await this.ticketRepository.findOneBy({ id: ticketId });
+  //   if (!ticket) {
+  //     throw new NotFoundException('Ticket not found');
+  //   }
+  //   return await this.ticketRepository.save({
+  //     ...ticket,
+  //     ...dto,
+  //   });
+  // }
 
   public async deleteTicket(
     userData: IUserData,

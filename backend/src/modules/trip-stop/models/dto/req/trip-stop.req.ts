@@ -33,7 +33,14 @@ export class TripStopReqDto {
   lng: number;
 
   @IsString()
-  locality: string;
+  city: string;
+
+  @IsString()
+  country: string;
+
+  @IsString()
+  @IsOptional()
+  iso_code: string;
 
   @ApiProperty({ example: 'some image url' })
   @IsString()
