@@ -60,7 +60,6 @@ const currencyService = {
       return undefined;
     }
   },
-
 }
 
 export { weatherService, currencyService }

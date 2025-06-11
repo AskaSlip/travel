@@ -12,6 +12,7 @@ export const metadata: Metadata = {
   description: 'Travel Planner',
 };
 
+// const key= process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string;
 type PropType = { children: React.ReactNode };
 //todo fix trigger
 export default function RootLayout({ children }: Readonly<PropType>) {

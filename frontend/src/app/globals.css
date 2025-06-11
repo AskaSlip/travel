@@ -10,7 +10,9 @@
 /*    height: 100%;*/
 /*}*/
 
-
+.menu-item-selected svg {
+    fill: #7f3dd9 !important;
+}
 
 body {
     margin: 0;
